@@ -3,18 +3,18 @@
 
 develop by mk@almi.de
 
-If you use/like this project please donate to paypal.me/openonorg (a good choise is 1Euro per ESP a year ;-)
+![CmdOS LOGO](images/CmdOS.gif)
 
-!(images/CmdOS.gif)
+If you use/like this project please <a href='http://paypal.me/openonorg<'>donate to http://paypal.me/openonorg</a> (a good choise is 1Euro per ESP a year ;-)
 
 [<a href="libs.md">Require Libs</a>]
 
-A cmd based operation system for the ESP32.
+**CmdOS is a command based operation system for the ESP32.**
 
 ## Feature:
 - EEPROM config and Failsafe boot
 - SPIFF / Filesystem
-- <a href='CmdOsSetup.md'>Setup with AutoWifi Set_up'</a>
+- <a href='CmdOsSetup.md'>Setup with AutoWifi set_up'</a>
 - Wifi 
 - mDNS
 - NTP
