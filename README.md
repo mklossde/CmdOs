@@ -29,9 +29,6 @@ If you use/like this project please <a href='http://paypal.me/openonorg<'>donate
 - Logging
 - AcessControl
 
-## Web:
-- Filesystem Browser
-
 ## Cmd Interfaces:
 - Serial cmd
 - WebSerial cmd
