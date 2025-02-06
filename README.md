@@ -14,7 +14,7 @@ If you use/like this project please <a href='http://paypal.me/openonorg<'>donate
 ## Feature:
 - EEPROM config and Failsafe boot
 - SPIFF / Filesystem
-- <a href='CmdOsSetup.md'>Setup with AutoWifi set_up'</a>
+- <a href='CmdOsSetup.md'>Setup with AutoWifi set_up</a>
 - Wifi 
 - mDNS
 - NTP
