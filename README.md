@@ -5,7 +5,7 @@ develop by mk@almi.de
 
 If you use/like this project please donate to paypal.me/openonorg (a good choise is 1Euro per ESP a year ;-)
 
-!images/CmdOS.gif
+!(images/CmdOS.gif)
 
 [<a href="libs.md">Require Libs</a>]
 
