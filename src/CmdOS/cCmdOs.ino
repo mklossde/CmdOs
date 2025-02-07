@@ -124,7 +124,7 @@ public:
       if(len>0) { memcpy( to, obj, len); } 
       to[len]='\0'; 
       _key[_index]=copy(key); _array[_index]=to; _vsize[_index]=size;      
-      sprintf(buffer,"map add %d '%s' len:%d size:%d",_index,key,len,size); logPrintln(LOG_DEBUG,buffer);
+      sprintf(buffer,"set %d '%s'='%s' len:%d size:%d",_index,key,to,len,size); logPrintln(LOG_DEBUG,buffer);
       _index++;
     }else {
       void* old=(void*)_array[index];
@@ -135,7 +135,7 @@ public:
       }         
       char* o=(char*)_array[index]; 
       if(len>0) { memcpy(o, obj, len); } o[len]='\0';
-      sprintf(buffer,"map replace '%s' len:%d oldSize:%d",key,len,oldSize); logPrintln(LOG_DEBUG,buffer);
+      sprintf(buffer,"replace '%s'='%s' len:%d oldSize:%d",key,o,len,oldSize); logPrintln(LOG_DEBUG,buffer);
     }
   }
   
@@ -554,7 +554,7 @@ void mqttLog(char *message); // define in mqtt
         sprintf(buffer,"name:'%s'",name);logPrintln(LOG_INFO,buffer);  
 */
 void logPrintln(int level,const char *text) { 
-  if(level>logLevel || text==NULL) { return ; }
+  if(level>logLevel || !is(text)) { return ; }
   if(serialEnable) { Serial.println(text); } 
   if(webEnable) { webLogLn(toString(text)); }
   if(mqttEnable) { mqttLog((char*)text); }
@@ -564,7 +564,7 @@ void logPrintln(int level,const char *text) {
     e.g. logPrintln(LOG_DEBUG,"info text");
 */
 void logPrintln(int level,String text) {  
-  if(level>logLevel || text==NULL) { return ; } 
+  if(level>logLevel || !is(text)) { return ; } 
   const char* log=text.c_str();
   if(serialEnable) { Serial.println(log); } 
   if(webEnable) { webLogLn(text); }

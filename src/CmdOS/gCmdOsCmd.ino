@@ -36,6 +36,8 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "esp")) { return espInfo();  }// show esp status
   else if(equals(cmd, "stat")) { return appInfo(); }// show esp status
 
+  else if(equals(cmd, "freeHeap")) { sprintf(buffer,"%d",ESP.getFreeHeap());return buffer; }// show free heap
+  
   else if(equals(cmd, "login")) { cmdLogin(p0); return EMPTY;}
   else if(equals(cmd, "restart")) { espRestart("cmd restart"); return EMPTY; }// restart
   else if(equals(cmd, "sleep")) {  sleep(p0,p1); return EMPTY; }      // sleep TIMEMS MODE (e.g. sleep 5000 0) (TIMEMS=0=>EVER) (MODE=0=>WIFI_OFF)
@@ -55,7 +57,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { return setup(p0,p1,p2,p3); }// setup wifi-ssid wifi-pas espPas => save&restart
   else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { return setupDev(p0); } // enable/disable setupDevices
   
-  else if(equals(cmd, "log")) { sprintf(buffer,"%s %s %s %s %s %s %s %s",p0,p1,p2,p3,p4,p5,p6,p7); logPrintln(LOG_INFO,buffer); return buffer;}// log
+  else if(equals(cmd, "log")) { sprintf(buffer,"%s %s %s %s %s %s %s %s",p0,p1,p2,p3,p4,p5,p6,p7); logPrintln(LOG_INFO,buffer); return EMPTY;}// log
   else if(equals(cmd, "logLevel")) { return setLogLevel(toInt(p0)); }  // set mode (e.g. "mode NR")
 
   else if(equals(cmd, "save")) { bootSave(); return EMPTY; }// write data to eeprom
@@ -120,8 +122,8 @@ void cmdWait(unsigned long cmdWait) { _cmdWait=cmdWait; *_prgTime=1; }
 
 /** goto key in prg */
 boolean cmdGoto(char *p0) { 
-  if(_prg==NULL || p0==NULL) { return "goto prg/label NULL"; }
-  else if(isInt(p0)) { _skipCmd=toInt(p0); return false;}
+  if(_prg==NULL || p0==NULL) { return "goto prg/label NULL"; } 
+  if(isInt(p0)) { _skipCmd=toInt(p0); return false;}
 
   char *findPtr=_prg;
   while(true) {
