@@ -200,6 +200,14 @@ void bootClear() {
   EEPROM.end();  
 }
 
+byte _bootRestVal=0;
+
+/* boot reset */
+char* bootReset(char *p) {
+  int i=toInt(p);
+  if(i>1 && i==_bootRestVal) { bootClear(); return "reset done";} // do reset 
+  else { _bootRestVal=random(2,99); sprintf(buffer,"%d",_bootRestVal); return buffer; } // without set new reset value
+}
 
 void bootPrivat() {
   sprintf(eeBoot.wifi_ssid,wifi_ssid_default); // my privat WIFI SSID of AccessPoint

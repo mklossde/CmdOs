@@ -33,6 +33,7 @@ static char* mqttMessage=new char[1024]; // buffer of message
 
 /* get mqtt infos */
 char* mqttInfo() {
+  if(!is(eeBoot.mqtt) || !is(mqttUser) || !is(mqttServer) ) { return "mqtt not defined"; }
   char *type="mqtt"; if(mqttSSL) { type="mqtts"; }
   sprintf(buffer,"MQTT status:%d  %s://%s:%d@%s:%d (ee:%s)",
     mqttStatus,type,mqttUser,is(mqttPas),mqttServer,mqttPort,eeBoot.mqtt); return buffer;
@@ -114,6 +115,7 @@ void publishTopic(char* topic,char *message) {
 
 /** subcribe topic to attr **/
 void mqttAttr(char *topic,boolean on) {
+  if(mqttStatus != 2) { return ; }
   char* t=copy(topic);
   sprintf(buffer,"MQTT attr via topic %s",topic);
   if(on) { 

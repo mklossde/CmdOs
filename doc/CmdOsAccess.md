@@ -12,3 +12,5 @@ Set accessLevel with cmd "setAccess ACCESS_LEVEL". The Access-Level define which
 - ACCESS_CHANGE 2 // user function 
 - ACCESS_READ 3 // info function 
 - ACCESS_ALL 4 // general function
+
+![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 

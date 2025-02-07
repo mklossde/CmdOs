@@ -19,9 +19,11 @@ The result of cmd will resposne as body
 		
 # Config
 	http://ESPNAME.local/config	
-- save
+- save (and restart)
 - restart (without save)	
-- reset
+- reset VALUE - reset all after validation 
+call "rest" will return a random numner. call "reset NUMBER" to rest all
+
 
 ## config Esp
 	Config the Esp (wifi,name,mqtt,ntp,..)
@@ -48,3 +50,5 @@ The result of cmd will resposne as body
 - Rename a File
 - Upload a File (+Drag and Drop)
 - Upload URL to File 
+
+![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 

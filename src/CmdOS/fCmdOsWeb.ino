@@ -90,6 +90,21 @@ void webRoot(AsyncWebServerRequest *request) {
   request->send(200, "text/html", html);
 }
 
+void webWifiReset(AsyncWebServerRequest *request) {
+  String value=webParam(request,"reset");
+  char* res=bootReset((char*)value.c_str());
+  String html = "";
+  html = pageHead(html, "Reset");
+  html += "<b>"+String(res)+"</b>";
+  html = pageForm(html, "Reset");
+  html = pageInput(html, "reset", "");
+  html = pageButton(html, "ok", "ok");
+  html = pageFormEnd(html);
+
+  html = pageEnd(html,EMPTYSTRING);
+  request->send(200, "text/html", html);
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // File Manager
 
@@ -302,7 +317,7 @@ void webWifi(AsyncWebServerRequest *request) {
   String message;
   if (request->hasParam("ok")) { webWifiSet(request); message="set"; }
   else if (request->hasParam("save")) { bootSave(); message="saved";  }
-  else if (request->hasParam("reset")) { bootClear(); message="reset";  }
+  else if (request->hasParam("reset")) { webWifiReset(request); return ;  }
   else if (request->hasParam("restart")) { espRestart("web restart"); }
 
   String html = "";
@@ -321,7 +336,8 @@ void webWifi(AsyncWebServerRequest *request) {
   html+= "<hr>";
   html = pageCmd(html, "restart", "restart");
   html = pageCmd(html, "save", "save");
-  html = pageCmd(html, "reset", "reset");
+//  html = pageCmd(html, "reset", "reset");
+  html += "[<a href='?reset=0'>reset</a>]";
   
   //  html=pageFormEnd(html,"ok");
   html = pageEnd(html,message);

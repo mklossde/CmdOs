@@ -50,7 +50,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "if")) { boolean ok=cmdIf(p0,p1,p2,p3); sprintf(buffer,"%d",ok); return buffer; }// if p0 <=> p2 => skip p4
   else if(equals(cmd, "random")) { int r=random(toInt(p0),toInt(p1));  sprintf(buffer,"%d",r); return buffer;  } // random min-max
   else if(equals(cmd,"extract")) { return extract(p0,p1,p2); } // extract start end str (e.g  "free:"," " from "value free:1000 colr:1" => 1000)
-  else if(equals(cmd, "reset")) { bootClear(); return EMPTY; }// reset eeprom and restart    
+  else if(equals(cmd, "reset")) { return bootReset(p0); }// reset eeprom and restart    
 
   else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { return setup(p0,p1,p2,p3); }// setup wifi-ssid wifi-pas espPas => save&restart
   else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { return setupDev(p0); } // enable/disable setupDevices
@@ -93,6 +93,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "rest")) { return rest(p0); } // 
   else if(equals(cmd, "cmdRest")) { return cmdRest(p0); } // call http/rest and exute retur nbody as cmd
 
+  // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
   else if(equals(cmd, "timer") && isAccess(ACCESS_CHANGE)) { timerAdd(toBoolean(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),p7); return EMPTY; }
   else if(equals(cmd, "timerDel") && isAccess(ACCESS_CHANGE)) { timerDel(toInt(p0)); return EMPTY; }
   else if(equals(cmd, "timerGet") && isAccess(ACCESS_READ)) { 

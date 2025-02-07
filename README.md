@@ -56,7 +56,7 @@ The Network time is received from ntp-server, or gateway (if no npt-server is de
 As default a SPIFF filesystem is used
 	
 
-A OpenOn.org project - develop by mk@almi.de ![CmdOS LOGO](images/CmdOS_logo.gif)	
+![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 
 
 
 

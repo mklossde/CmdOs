@@ -33,3 +33,4 @@ The actual boot eeMode is stored in config
 - EE_MODE_SYSERROR 51  // MODE ERROR , Enable only CMD
     something very bad happends / only serial cmd
 	
+![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 

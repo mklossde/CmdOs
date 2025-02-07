@@ -41,3 +41,5 @@ Now switch on esp with new installed CmdOs or use "reset" on remote.
 - NewDevice will execute "http://OLDDEVICE/setupDevice on OlDevice => OldDevcice resonse "setup wifiSSID wifiPas "" espPas
 - NewDevcice execute given setup and will save and reboot
 
+![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 
+
