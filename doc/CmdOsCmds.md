@@ -119,10 +119,12 @@ save all configurations
 ## load 
 load all configurations
 
-## set [espName] [espPas]
+## conf [espName] [espPas] [espBoard]
 set name of esp (e.g. for mdns)
 and password for (login/web/mqtt) access control
-return esp-infs 
+and board name
+	e.g. "conf myesp mypas myboard"
+return config-infs 
 	e.g. "eeBoot eeMode:30 espName: espPas:1 espBoard: wifi_ssid:IoT timestamp:1738511365 mqtt:mqtt ntp:"
 
 ## access accessLevel
