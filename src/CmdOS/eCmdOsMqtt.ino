@@ -34,16 +34,19 @@ static char* mqttMessage=new char[1024]; // buffer of message
 /* get mqtt infos */
 char* mqttInfo() {
   if(!is(eeBoot.mqtt) || !is(mqttUser) || !is(mqttServer) ) { return "mqtt not defined"; }
-  char *type="mqtt"; if(mqttSSL) { type="mqtts"; }
-  sprintf(buffer,"MQTT status:%d  %s://%s:%d@%s:%d (ee:%s)",
-    mqttStatus,type,to(mqttUser),is(mqttPas),to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;
+  char *type="mqtt"; if(mqttSSL) { type="mqtts"; }  
+  if(is(mqttUser)) {
+    sprintf(buffer,"MQTT status:%d  %s://%s:%d@%s:%d (ee:%s)",
+      mqttStatus,type,to(mqttUser),is(mqttPas),to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;
+  }else { sprintf(buffer,"MQTT status:%d  %s://%s:%d (ee:%s)",mqttStatus,type,to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;}
 }
 
 /* split mqtt-url */
-void mqttSetUrl(char* mqtt) {
+void mqttSetUrl(char* mqttUrl) {
   mqttUser=NULL; mqttPas=NULL; mqttServer=NULL; mqttPort=1833;  
-  if(!is(mqtt,1,127)) { logPrintln(LOG_ERROR,"MQTT missing/wrong"); return ; }
+  if(!is(mqttUrl,1,127)) { logPrintln(LOG_ERROR,"MQTT missing/wrong"); return ; }
 
+  char *mqtt=copy(mqttUrl);  
    if(strncmp(mqtt, "mqtt://",7)==0) { mqttSSL=false;  } 
    else if(strncmp(mqtt, "mqtts://",7)==0) { mqttSSL=false; }
    else { return ; } 
@@ -60,13 +63,15 @@ void mqttSetUrl(char* mqtt) {
    char *port=strtok_r(NULL, "",&ptr); if(port==NULL) { logPrintln(LOG_ERROR,"MQTT missing port"); return ;} 
    mqttPort=atoi(port);
 
-   sprintf(buffer,"MQTT set ssl:%d server:%s port:%d user:%s pas:%s", mqttSSL, mqttServer,mqttPort,mqttUser,mqttPas);  logPrintln(LOG_INFO,buffer);
+   sprintf(buffer,"MQTT set ssl:%d server:%s port:%d user:%s pas:%s", mqttSSL, to(mqttServer),mqttPort,to(mqttUser),to(mqttPas));  logPrintln(LOG_INFO,buffer);
+   delete[] mqtt;
 }
 
 /* set mqtt url */
 char* mqttSet(char* mqtt) {
-  if(is(mqtt,0,128) && isAccess(ACCESS_ADMIN)) {     
+  if(is(mqtt,1,128) && isAccess(ACCESS_ADMIN)) {     
     strcpy(eeBoot.mqtt,mqtt);  
+
     mqttSetUrl(eeBoot.mqtt);
   }
   return mqttInfo();

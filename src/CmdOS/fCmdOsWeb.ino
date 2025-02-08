@@ -389,7 +389,7 @@ void webSetupDevice(AsyncWebServerRequest *request) {
   if(setupDevice>0) {
     String name=webParam(request,"name");
     char *setupName=NULL; if(name!=NULL) { setupName=(char*)name.c_str(); } 
-    sprintf(buffer,"setup \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"",to(eeBoot.wifi_ssid),to(eeBoot.wifi_pas),to(setupName),to(eeBoot.espPas),
+    sprintf(buffer,"setup %s %s \"%s\" %s %s",to(eeBoot.wifi_ssid),to(eeBoot.wifi_pas),to(setupName),to(eeBoot.espPas),
       to(eeBoot.mqtt));
     request->send(200, "text/plain", buffer);     
     if(setupDevice<255) { setupDevice--;}
