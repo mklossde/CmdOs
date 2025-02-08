@@ -15,11 +15,12 @@
 #endif
 
 // Bootloader version
-char bootType[5] = "Os02"; // max 10 chars
+char bootType[5] = "Os01"; // max 10 chars
 
 // bootloader data struc
 typedef struct {
-  unsigned long timestamp;                 // timestamp of store  
+  unsigned long timestamp=0;                 // timestamp of store  
+  unsigned long saveCount=0;                  // number of saves
   char wifi_ssid[32]="";                   // WIFI SSID of AccessPoint
   char wifi_pas[32]="";                     // WIFI password of AccessPoint
   char wifi_ntp[32]="";                   // ntp server
@@ -46,6 +47,7 @@ eeBoot_t eeBoot;    // bootloader data
 void eeSave() {
   if(serialEnable) { Serial.println("### SAVE");}
   eeBoot.timestamp=timeSec();  
+  eeBoot.saveCount++; // rememeber number of saves
   int pos=0;
   EEPROM.begin(EEBOOTSIZE);
   EEPROM.put(pos, bootType ); pos+=5; // write type for validation
@@ -100,9 +102,11 @@ void eeSetup() {
     return; 
   }else if(eeMode==EE_MODE_SETUP) {
     if(serialEnable) { Serial.println("### MODE SETUP "); }
+    setAccess(true);
     return ;
   } else if(eeMode==EE_MODE_AP) {
     if(serialEnable) { Serial.println("### MODE AP "); }
+    setAccess(true);
     return ;
   }
 
@@ -110,10 +114,10 @@ void eeSetup() {
     Serial.print("### MODE(NOBS) ");Serial.println(eeMode); // ignore all other on disable boot safe 
   }else if(eeMode==EE_MODE_ERROR) {
     if(serialEnable) { Serial.println("### MODE ERROR "); }
-    setAccess(ACCESS_ADMIN);
+    setAccess(true);
     eeSetMode(EE_MODE_SYSERROR); // mark 
   } else if(eeMode==EE_MODE_SYSERROR) {
-    setAccess(ACCESS_ADMIN);
+    setAccess(true);
     if(serialEnable) { Serial.println("### MODE SYSERROR "); }
 
   }else if(eeMode==EE_MODE_OK) { 
@@ -147,21 +151,23 @@ void eeLoop() {
 
 // info about boot 
 char* bootInfo() {
-   sprintf(buffer,"eeBoot eeMode:%d espName:%s espPas:%d espBoard:%s wifi_ssid:%s timestamp:%d mqtt:%s ntp:%s", 
-   eeMode, eeBoot.espName,is(eeBoot.espPas),eeBoot.espBoard,eeBoot.wifi_ssid,eeBoot.timestamp,eeBoot.mqtt,eeBoot.wifi_ntp); 
+   sprintf(buffer,"eeBoot eeMode:%d espName:%s espPas:%d espBoard:%s wifi_ssid:%s mqtt:%s ntp:%s timestamp:%d count:%d", 
+    eeMode, to(eeBoot.espName),is(eeBoot.espPas),to(eeBoot.espBoard),to(eeBoot.wifi_ssid),to(eeBoot.mqtt),to(eeBoot.wifi_ntp),
+    eeBoot.timestamp,eeBoot.saveCount); 
    return buffer;
 }
 
 /* set espName,espInfo */ 
-char* bootSet(char* espName,char* espPas) {
-  if(is(espName) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espName,espName); }
-  if(is(espPas) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espPas,espPas); }
+char* bootSet(char* espName,char* espPas,char* espBoard) {
+  if(is(espName,1,31) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espName,espName); }
+  if(is(espPas,1,31) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espPas,espPas); }
+  if(is(espBoard,1,31) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espBoard,espBoard); }
   return bootInfo();
 }
 
 /* save bootloader from RAM into EEPROM [ADMIN] */
 void bootSave() {
-  if(!isAccess(ACCESS_ADMIN)) { return ; }
+  if(!isAccess(ACCESS_ADMIN)) { logPrintln(LOG_ERROR,"no access bootSave"); return ; }
 
   // auto set WIFI_CL_TRY when in AP
   if((eeMode<EE_MODE_WIFI_OFF) && is(eeBoot.wifi_ssid) && is(eeBoot.wifi_pas)) {
@@ -185,7 +191,7 @@ void bootRead() {
 
   sprintf(buffer,"EEPROM boot read mode:%d timestamp:%d espName:%s wifi_ssid:%s",eeMode,eeBoot.timestamp,eeBoot.espName,eeBoot.wifi_ssid); logPrintln(LOG_SYSTEM,buffer); 
   logPrintln(LOG_SYSTEM,bootInfo());
-  mqttSet(eeBoot.mqtt);  // set mqtt
+  mqttSetUrl(eeBoot.mqtt);  // set mqtt
   if(!is(eeBoot.espPas)) { setAccess(ACCESS_ADMIN); } // without espApd admin=true
   ledBlink(1,100); // OK => direct blink 1x100ms
 }
@@ -230,9 +236,10 @@ boolean _isLogin=false;
 
 /* have access level */
 bool isAccess(int requireLevel) {   
-  if(_isLogin || !is(eeBoot.espPas)) { return true; } // isLogin or no password given
-  else if(requireLevel>eeBoot.accessLevel) { return true; } // access free
-  else { logPrintln(LOG_ERROR,"ACCESS DENIED"); return false; }
+  if(_isLogin) { return true; } // is login 
+  else if(!is(eeBoot.espPas)) { return true; } // no password given
+  else if(requireLevel>=eeBoot.accessLevel) { return true; } // access free
+  else { sprintf(buffer,"ACCESS DENIED %d<%d %d",requireLevel,eeBoot.accessLevel,_isLogin); logPrintln(LOG_ERROR,buffer); return false; }
 }
 
 void setAccess(boolean login) { _isLogin=login; }
@@ -346,13 +353,13 @@ void ntpSetup() {
 /* set time and timeServer [ADMIN] */
 char* timeSet(char* time,char* timeServer) {
   if(time!=NULL && strlen(time)>0) {
-    if(!isAccess(ACCESS_ADMIN)) { return "access denied"; }
+    if(!isAccess(ACCESS_ADMIN)) { return "no access set time"; }
     time_t newTime=(time_t)atol(time);
     timeval tv;tv.tv_sec = newTime;    
     settimeofday(&tv,NULL); // set your time (e.g set time 1632839830)
   }
-  if(timeServer!=NULL) { 
-    if(!isAccess(ACCESS_ADMIN)) { return "access denied"; }
+  if(is(timeServer,1,31)) { 
+    if(!isAccess(ACCESS_ADMIN)) { return "no access set timeServer"; }
     strcpy(eeBoot.wifi_ntp,timeServer);    
   }
   return timeInfo();
@@ -497,15 +504,16 @@ char* wifiSet(char *wifi_ssid,char *wifi_pas) {
 }
 
 /* setup wifi and espPas + save + boot */
-char* setup(char *wifi_ssid, char *wifi_pas,char *espName, char *espPas) {
-  if(isAccess(ACCESS_ADMIN)) { return "no access"; }
-  if(!is(wifi_ssid) && !(wifi_pas)) { return "wrong"; }
+char* setupEsp(char *wifi_ssid, char *wifi_pas,char *espName, char *espPas,char *mqtt) {
+  if(!isAccess(ACCESS_ADMIN)) { return "no access setup"; }
+  if(!is(wifi_ssid) && !(wifi_pas)) { return "missing ssid/pas"; }
 
   eeBoot= eeBoot_t(); // reinit 
-  strcpy(eeBoot.wifi_ssid,wifi_ssid); 
-  strcpy(eeBoot.wifi_pas,wifi_pas);  
-  if(is(espName)) { strcpy(eeBoot.espName,espName); }
-  if(is(espPas)) { strcpy(eeBoot.espPas,espPas); }
+  if(is(wifi_ssid,1,31)) {strcpy(eeBoot.wifi_ssid,wifi_ssid); }
+  if(is(wifi_pas,1,31)) { strcpy(eeBoot.wifi_pas,wifi_pas);  }
+  if(is(espName,1,31)) { strcpy(eeBoot.espName,espName); }
+  if(is(espPas,1,31)) { strcpy(eeBoot.espPas,espPas); }
+  mqttSet(mqtt); 
   bootSave();
   return bootInfo();
 }
@@ -524,7 +532,7 @@ void wifiAccessPoint(boolean setpUpAP) {
 
   WiFi.softAPConfig(ap_IP, ap_gateway, ap_subnet);  
   WiFi.softAP(apSSID);
-  setAccess(ACCESS_ADMIN); // enable admin in AP
+  setAccess(true); // enable admin in AP
   IPAddress myIP = WiFi.softAPIP();
   sprintf(buffer,"WIFI AccessPoint SSID:%s IP:%s", apSSID,myIP.toString().c_str()); logPrintln(LOG_SYSTEM,buffer); 
 //TODO  ledBlinkPattern(0,&ledPatternFlashSlow); // blink AP mode
@@ -538,11 +546,16 @@ void wifiAccessPoint(boolean setpUpAP) {
   bootWifiCount=1;
 }
 
+int _lastClient=0;
+
 /* this ap is connected from client */
 void wifiAPClientConnect() {
-//  if (WiFi.status() == WL_AP_CONNECTED) {
-//    sprintf(buffer,"client connect to ap"); logPrintln(LOG_DEBUG,buffer);    
-//  }  
+  int numClients = WiFi.softAPgetStationNum();
+  if (numClients>_lastClient) {
+    _lastClient=numClients;
+    sprintf(buffer,"client %d connect to ap",numClients); logPrintln(LOG_DEBUG,buffer);    
+    // esp_wifi_ap_get_sta_list()
+  }  
 }
 
 /** this client connected to remote set_up */
@@ -550,9 +563,18 @@ void wifiAPConnectoToSetup() {
     if (WiFi.status() == WL_CONNECTED) {      
       String gw=WiFi.gatewayIP().toString();
       String setupUrl="http://"+gw+"/setupDevice";
-      sprintf(buffer,"wifiAPConnectoToSetup call %s",setupUrl.c_str()); logPrintln(LOG_SYSTEM,buffer);
+      sprintf(buffer,"WIFI set_up connected %1 call %s",gw.c_str(),setupUrl.c_str()); logPrintln(LOG_SYSTEM,buffer);
       char* ret=cmdRest((char*)setupUrl.c_str());
-      logPrintln(LOG_SYSTEM,buffer);
+      logPrintln(LOG_SYSTEM,ret);
+    }else if(serialEnable) { 
+      Serial.print("s");Serial.print(bootWifiCount); Serial.print(WiFi.status());
+      bootWifiCount++;
+      if(bootWifiCount>MAX_NO_SETUP) { // set_up failed => switch to ap
+        logPrintln(LOG_INFO,"\nno wifi set_up found"); 
+//        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try 
+        wifiAccessPoint(false); 
+        eeMode=EE_MODE_AP;        
+      }
     }
 }
 
@@ -575,10 +597,10 @@ void wifiConnecting() {
       if(ntpEnable) { ntpSetup(); }
 
     }else { // Connecting
-      if(bootWifiCount==0) { }
-      else if( eeMode == EE_MODE_SETUP && bootWifiCount<MAX_NO_SETUP) {  // try faild
-        logPrintln(LOG_INFO,"no wifi setup"); 
-        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try  
+      if(bootWifiCount==0) { 
+//    }  else if( eeMode == EE_MODE_SETUP && bootWifiCount<MAX_NO_SETUP) {  // try faild
+//        logPrintln(LOG_INFO,"no wifi setup"); 
+//        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try  
 
       }else if(bootWifiCount<MAX_NO_WIFI) {              
         if(serialEnable) {sprintf(buffer,"%d",WiFi.status()); Serial.print(buffer); }   
@@ -631,10 +653,10 @@ void wifiTry() {
 
 /* wifi login to setup Router */
 void wifiStartSetup() {
-  sprintf(buffer,"WIFI setup SSID:%s ...", wifi_setup); logPrintln(LOG_INFO,buffer); 
+  sprintf(buffer,"WIFI set_up connecting %s ...", wifi_setup); logPrintln(LOG_INFO,buffer); 
   delay(10);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(wifi_setup, wifi_setup);
+  WiFi.begin(wifi_setup);
   bootWifiCount=1;  
   wifiStat=WIFI_CON_CONNECTING;
 }

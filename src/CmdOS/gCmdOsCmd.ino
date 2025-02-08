@@ -12,7 +12,8 @@ char prgLine [maxInData]; // prgLine buffer
 
 
 char* appInfo() {
-   sprintf(buffer,"AppInfo %s %s eeType:%s login:%d access_level:%d",prgTitle,prgVersion,bootType,_isLogin,eeBoot.accessLevel); return buffer;
+   sprintf(buffer,"AppInfo %s %s CmdOs:%s bootType:%s login:%d access_level:%d",
+      prgTitle,prgVersion,cmdOS,bootType,_isLogin,eeBoot.accessLevel); return buffer;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -54,7 +55,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd,"extract")) { return extract(p0,p1,p2); } // extract start end str (e.g  "free:"," " from "value free:1000 colr:1" => 1000)
   else if(equals(cmd, "reset")) { return bootReset(p0); }// reset eeprom and restart    
 
-  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { return setup(p0,p1,p2,p3); }// setup wifi-ssid wifi-pas espPas => save&restart
+  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { return setupEsp(p0,p1,p2,p3,p4); }// setup wifi-ssid wifi-pas espPas => save&restart
   else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { return setupDev(p0); } // enable/disable setupDevices
   
   else if(equals(cmd, "log")) { sprintf(buffer,"%s %s %s %s %s %s %s %s",p0,p1,p2,p3,p4,p5,p6,p7); logPrintln(LOG_INFO,buffer); return EMPTY;}// log
@@ -62,7 +63,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
 
   else if(equals(cmd, "save")) { bootSave(); return EMPTY; }// write data to eeprom
   else if(equals(cmd, "load")) { bootRead(); return EMPTY;  }// load data from eprom
-  else if(equals(cmd, "set")) {  return bootSet(p0,p1); }      // set esp name and password (e.g. "set" or "set NAME PAS")  
+  else if(equals(cmd, "conf")) {  return bootSet(p0,p1,p3); }      // set esp name and password (e.g. "set" or "set NAME PAS")  
   else if(equals(cmd,"access")) { setAccessLevel(toInt(p0)); return EMPTY; } // set  AccessLevel (e.g. "access 5")
   else if(equals(cmd, "wifi")) { return wifiSet(p0,p1); }      // set wifi, restart wifi and info (e.g. "wifi" or "wifi SSID PAS")  
   else if(equals(cmd, "scan")) {  return wifiScan(); }         // scan wifi (e.g. "scan")
@@ -259,7 +260,11 @@ char* prgLoop() {
   char *line = nextCmd();  
   while(line==EMPTY) { line = nextCmd(); } // skip empty lines 
   if(line!=NULL) {  return cmdLine(line); }
-  else {  logPrintln(LOG_DEBUG,"PRG end"); delete[] _prg; _prg=NULL; _prgPtr=NULL;  return "prg end";  }
+  else {  
+    logPrintln(LOG_DEBUG,"PRG end"); 
+    if(_prg!=NULL) { delete[] _prg; _prg=NULL; _prgPtr=NULL; }  
+    return "prg end";  
+  }
 }
 
 /* next n steps */
@@ -302,7 +307,10 @@ char* cmdFile(char* p0) {
 
 /* call http/rest and execute return body as cmd */
 char* cmdRest(char *url) {
-  char* ret=rest(String(url));  if(ret==NULL) { return NULL; } else { return cmdPrg(ret); }
+  char* ret=rest(String(url));  
+  if(!is(ret)) { return NULL; } 
+  sprintf(buffer,"cmdRest %s",ret); logPrintln(LOG_DEBUG,buffer);
+  return cmdPrg(ret);
 }
 
 //-----------------

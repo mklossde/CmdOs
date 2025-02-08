@@ -36,14 +36,13 @@ char* mqttInfo() {
   if(!is(eeBoot.mqtt) || !is(mqttUser) || !is(mqttServer) ) { return "mqtt not defined"; }
   char *type="mqtt"; if(mqttSSL) { type="mqtts"; }
   sprintf(buffer,"MQTT status:%d  %s://%s:%d@%s:%d (ee:%s)",
-    mqttStatus,type,mqttUser,is(mqttPas),mqttServer,mqttPort,eeBoot.mqtt); return buffer;
+    mqttStatus,type,to(mqttUser),is(mqttPas),to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;
 }
 
 /* split mqtt-url */
-void setMqttUrl(char* mqtt) {
+void mqttSetUrl(char* mqtt) {
   mqttUser=NULL; mqttPas=NULL; mqttServer=NULL; mqttPort=1833;  
-  if(sizeof(mqtt)<1) { logPrintln(LOG_ERROR,"MQTT missing url"); return ; }
-  strcpy(eeBoot.mqtt,mqtt);
+  if(!is(mqtt,1,127)) { logPrintln(LOG_ERROR,"MQTT missing/wrong"); return ; }
 
    if(strncmp(mqtt, "mqtt://",7)==0) { mqttSSL=false;  } 
    else if(strncmp(mqtt, "mqtts://",7)==0) { mqttSSL=false; }
@@ -67,7 +66,8 @@ void setMqttUrl(char* mqtt) {
 /* set mqtt url */
 char* mqttSet(char* mqtt) {
   if(is(mqtt,0,128) && isAccess(ACCESS_ADMIN)) {     
-    setMqttUrl(mqtt);
+    strcpy(eeBoot.mqtt,mqtt);  
+    mqttSetUrl(eeBoot.mqtt);
   }
   return mqttInfo();
 }

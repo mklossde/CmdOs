@@ -3,7 +3,6 @@
 // Application Start SRC
 
 #include <ESPAsyncWebServer.h>
-#include <AnimatedGIF.h>
  
 const char *prgTitle = "MyApp";
 const char *prgVersion = "V1.0.0";

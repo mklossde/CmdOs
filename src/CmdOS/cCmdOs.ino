@@ -309,7 +309,6 @@ boolean is(String str,int min,int max) { if(str==NULL || str==EMPTYSTRING ) { re
 /* convert to correct char */
 char* to(long d) { sprintf(buffer,"%d",d); return buffer; }
 char* to(char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { return p; } else { return EMPTY; } }
-//char* to(const char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { sprintf(valbuffer,"%s",p); return valbuffer; } else { return EMPTY; } }
 const char* to(const char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { return p; } else { return EMPTY; } }
 
 //char* to(const char *a) {  sprintf(buffer,"%s",to(a)); return buffer; }
@@ -548,6 +547,7 @@ void timeLoop() {
 
 void webLogLn(String msg); // define in web
 void mqttLog(char *message); // define in mqtt
+//void mqttSet(char *mqtt); // set mqtt
 
 /* log with level 
     e.g. logPrintln(LOG_INFO,"info"); 
@@ -706,7 +706,7 @@ char* setLogLevel(int level) {
 
   /* list files in SPIFFS of dir (null=/) */
   char* fsDir() {
-    if(!isAccess(ACCESS_READ))  { return "NO ACCESS"; }
+    if(!isAccess(ACCESS_READ))  { return "NO ACCESS rest"; }
     sprintf(buffer,"Files:\n");
     File root = FILESYSTEM.open(rootDir);
     File foundfile = root.openNextFile();

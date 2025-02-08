@@ -388,12 +388,16 @@ byte setupDevice=0;
 void webSetupDevice(AsyncWebServerRequest *request) {
   if(setupDevice>0) {
     String name=webParam(request,"name");
-    char *setupName; if(name!=NULL) { setupName=(char*)name.c_str(); } else { setupName="\"\""; }
-    sprintf(buffer,"setup %s %s %s %s",eeBoot.wifi_ssid,eeBoot.wifi_pas,setupName,eeBoot.espPas);
-    request->send(200, "text/plain", "setup "); 
-    sprintf(buffer,"webSetupDevice %s",setupName); logPrintln(LOG_INFO,buffer); 
+    char *setupName=NULL; if(name!=NULL) { setupName=(char*)name.c_str(); } 
+    sprintf(buffer,"setup \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"",to(eeBoot.wifi_ssid),to(eeBoot.wifi_pas),to(setupName),to(eeBoot.espPas),
+      to(eeBoot.mqtt));
+    request->send(200, "text/plain", buffer);     
     if(setupDevice<255) { setupDevice--;}
-    if(setupDevice==0) { wifiInit(); } // switch back to normal wifi
+    sprintf(buffer,"webSetupDevice %s setupDevice:%d",to(setupName),setupDevice); logPrintln(LOG_INFO,buffer); 
+    if(setupDevice==0) { 
+//      wifiInit(); 
+      WiFi.softAPdisconnect (true);
+    } // switch back to normal wifi
   }
 }  
 
