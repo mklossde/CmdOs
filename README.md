@@ -41,7 +41,7 @@ If you use/like this project please <a href='http://paypal.me/openonorg<'>donate
 	All functions are controled via cmd
 	e.g. drawLine 0 0 10 0 => draw a line on a display
 	
-	see <a href='example/example.md'>examples</a>
+See <a href='example/example.md'>examples</a>
 
 # Feature Autostart
 A filesytem file "/startup.cmd" is automaticly started after startup (after 10 seconds)
