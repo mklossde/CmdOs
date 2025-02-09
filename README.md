@@ -87,11 +87,12 @@ The idea is to build up own development and include basic functions with <a href
 - <a href='doc/CmdOsBoot.md'>EEPROM config and Failsafe boot</a>
 - <a href='doc/CmdOsSetup.md'>Setup with AutoWifi set_up</a>
 - <a href="doc/CmdOsWeb.md">Web</a>
-- <a href="doc/CmdOSMqtt.md">MQTT</a>
+- <a href='doc/CmdOSMqtt.md'>MQTT</a>
+- <a href='doc/CmdOSRest.md'>Rest and Remote</a>
 - <a href="doc/LedAndSwitch.md">Hardware LED and Button</a>
 - <a href="doc/CmdOsCmds.md">Command</a>
 - <a href="example/example.md">Programm examples</a>
-- <a href='doc/CmdOSTimer.md>Autostart and Timer</a>
+- <a href='doc/CmdOSTimer.md'>Autostart and Timer</a>
 - <a href='doc/CmdOsLog.md'>Logging</a>
 - <a href='doc/CmdOsAccess.md'>AcessControl</a>
 - <a href="doc/CmdOSFilesystem.md">SPIFF / Filesystem</a>
