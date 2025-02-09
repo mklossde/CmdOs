@@ -66,13 +66,13 @@ void webApp() {
 void setup() {
   cmdOSSetup();
   if(isModeOk()) { 
-    matrixSetup();
+    // all work fine - app setup here
   }  
 }
 
 void loop() {
   cmdOSLoop();
   if(isModeOk()) { 
-    // all works fine - add loop here 
+    // all works fine - app loop here 
   }  
 }

@@ -7,7 +7,6 @@ develop by mk@almi.de
 
 If you use/like this project please <a href='http://paypal.me/openonorg<'>donate to http://paypal.me/openonorg</a> (a good choise is 1Euro per ESP a year ;-)
 
-[<a href="libs.md">Require Libs</a>]
 
 **CmdOS is a command based operation system for the ESP32.**
 
@@ -111,6 +110,7 @@ The idea is to build up own development and include basic functions with <a href
 # Feature NTP
 The Network time is received from ntp-server, or gateway (if no npt-server is defined)
 	
+[<a href="libs.md">Require Libs</a>]	
 
 ![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 
 

@@ -77,6 +77,10 @@ void eeSetMode(byte mode) {
   EEPROM.begin(EEBOOTSIZE);
   EEPROM.put( 5, mode );
   EEPROM.end(); 
+}
+
+void setMode(byte mode) {
+  eeSetMode(mode);
   eeMode=mode;
 }
 
@@ -119,14 +123,14 @@ void eeSetup() {
   }else if(eeMode==EE_MODE_ERROR) {
     if(serialEnable) { Serial.println("### MODE ERROR "); }
     setAccess(true);
-    eeSetMode(EE_MODE_SYSERROR); // mark 
+    setMode(EE_MODE_SYSERROR);  // mark 
   } else if(eeMode==EE_MODE_SYSERROR) {
     setAccess(true);
     if(serialEnable) { Serial.println("### MODE SYSERROR "); }
 
   }else if(eeMode==EE_MODE_OK) { 
     if(serialEnable) { Serial.println("### MODE OK -> START"); }
-    eeSetMode(EE_MODE_START); // mark  
+    setMode(EE_MODE_START); // mark  
 
   }else if(eeMode>EE_MODE_WRONG) {
     if(serialEnable) { Serial.println("### MODE RE-INIT"); }
@@ -147,7 +151,7 @@ int okWait=10000; // wait 10s before start => ok
 
 void eeLoop() {
   if(eeMode<EE_MODE_ERROR && eeMode>=EE_MODE_START && isTimer(eeTime, okWait)) { 
-    eeSetMode(EE_MODE_OK); // mark  ok after start
+    setMode(EE_MODE_OK);  // mark  ok after start
   }
 }
 
@@ -175,7 +179,7 @@ void bootSave() {
 
   // auto set WIFI_CL_TRY when in AP
   if((eeMode<EE_MODE_WIFI_OFF) && is(eeBoot.wifi_ssid) && is(eeBoot.wifi_pas)) {
-    eeSetMode(EE_MODE_WIFI_TRY);
+    setMode(EE_MODE_WIFI_TRY); 
   }
  
   eeSave();
@@ -225,11 +229,6 @@ void bootPrivat() {
   sprintf(eeBoot.espPas,user_pas);   // my privat WIFI password of AccessPoint
   sprintf(eeBoot.mqtt,mqtt_default);            // my privat MQTT server
   eeMode=EE_MODE_PRIVAT; // set privat mode 
-}
-
-char* bootMode(int mode) {
-  if(mode>=0) { eeSetMode(mode); }
-  return bootInfo();  
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -592,7 +591,7 @@ void wifiConnecting() {
       sprintf(buffer,"WIFI mode:%d Connectd IP:%s Gateway:%s DNS:%s ", eeMode,appIP.c_str(), gw, WiFi.dnsIP().toString()); logPrintln(LOG_SYSTEM,buffer); 
       wifiStat=WIFI_CON_CONNECTED;
 
-      if(eeMode==EE_MODE_WIFI_TRY) { eeSetMode(EE_MODE_OK); eeSave(); } // try => cl  
+      if(eeMode==EE_MODE_WIFI_TRY) { setMode(EE_MODE_OK); } // try => cl  
       ledOff();
 
       // enable services
@@ -612,7 +611,7 @@ void wifiConnecting() {
       
       } else if( eeMode == EE_MODE_WIFI_TRY) {  // try faild
         sprintf(buffer,"WIFI error CL-TRY ssid:%s reset to AP", eeBoot.wifi_ssid); logPrintln(LOG_SYSTEM,buffer); 
-        eeSetMode(EE_MODE_SETUP); eeSave(); espRestart("no wifi, fallback setup"); // fallback to AccessPoint on faild try      
+        setMode(EE_MODE_SETUP); espRestart("no wifi, fallback setup"); // fallback to AccessPoint on faild try      
 
       } else {
          //sprintf(buffer,"WIFI error connect ssid:%s mode:%d", eeBoot.wifi_ssid,eeBoot.mode); logPrintln(LOG_SYSTEM,buffer); 
@@ -642,6 +641,7 @@ void wifiStart() {
 /* try connect wifi*/
 void wifiTry() {
 //TODO  ledBlinkPattern(0,&ledPattern2Flash); // Blink unlimeted 2Flash
+  eeSetMode(EE_MODE_SETUP); // set FALLBACK ON ERROR
   sprintf(buffer,"WIFI try connecting SSID:%s ...", eeBoot.wifi_ssid); logPrintln(LOG_INFO,buffer); 
   delay(10);  
   WiFi.persistent(false);
@@ -712,6 +712,10 @@ void wifiInit() {
     }
 }
 
+char* bootMode(int mode) {
+  if(mode>=0) { setMode(mode); wifiInit(); }
+  sprintf(buffer,"%d",eeMode); return buffer;
+}
 
 //----------------------------
 
@@ -726,8 +730,8 @@ void wifiLoop() {
 }
 
 void wifiStart(boolean on) { 
-  wifiEnable=on; if(on) { eeSetMode(EE_MODE_WIFI_TRY); wifiSetup(); } 
-  else { WiFi.mode(WIFI_OFF); eeSetMode(EE_MODE_WIFI_OFF); }
+  wifiEnable=on; if(on) { setMode(EE_MODE_WIFI_TRY); wifiSetup(); } 
+  else { WiFi.mode(WIFI_OFF); setMode(EE_MODE_WIFI_OFF); }
 }
 
 //-------------------------------------------------------------

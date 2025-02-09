@@ -196,7 +196,7 @@ List attrMap(true);
 
 //-----------------------------------------------------------------------------
 
-/* copy org* to new by ALLOCATE NEW MEMORY 
+/* copy org* to new (NEW CHAR[]
     e.g. char* n=copy(old); 
 */
 char* copy(char* org) { 
@@ -207,7 +207,7 @@ char* copy(char* org) {
   return newStr;
 }
 
-/* create a copy of org with new char[max] */
+/* create a copy of org with new char[max] (NEW CHAR[])*/
 char* copy(char *to,char* org,int max) { 
   if(to==NULL) { to=new char[max+1]; }
   if(to==NULL) { espRestart("copy() memory error"); }
@@ -218,6 +218,7 @@ char* copy(char *to,char* org,int max) {
   return to;
 }
 
+/* copy (MALLOC) */
 char* copy(char *to,String str,int max) { 
   if(to==NULL) { to = (char*)malloc((max + 1)*sizeof(char));  }     
   if(to==NULL) { espRestart("copy() memory error"); }
@@ -227,6 +228,20 @@ char* copy(char *to,String str,int max) {
   }
   return to;
 }
+
+char* copys(String str) {  
+  if(str==NULL || str==EMPTYSTRING) { return NULL; } 
+  char* s = (char*)malloc(str.length() + 1); 
+  if(s==NULL) { espRestart("to() memory error"); }
+  strcpy(s, str.c_str());
+  return s;
+}
+char* copy(String str,char* def) {  
+  if(str==NULL || str==EMPTYSTRING) { return def; } 
+  int len  =str.length()+1; if(len==0) { return def; } char ca[len]; str.toCharArray(ca,len); return(ca);
+}
+
+//------------------------------------
 
 
 /* replace all old_car with new_cahr in str 
@@ -258,6 +273,7 @@ boolean startWith(char *str,char *find) {
   return strcmp(str, find) == 0;
 }
 
+/** extract from src (NEW char[]) */
 char* extract(char *start, char *end, char *src) {
     const char *start_ptr = strstr(src, start); if (!start_ptr) { return NULL; }
     start_ptr += strlen(start);  // Move past 'start'
@@ -316,15 +332,6 @@ char* to(char *a,char *b) { sprintf(buffer,"%s%s",to(a),to(b)); return buffer; }
 char* to(const char *a, const char *b,const char *c) {  sprintf(buffer,"%s%s%s",to(a),to(b),to(c)); return buffer; }
 char* to(const char *a, const char *b,const char *c,const char *d) {  sprintf(buffer,"%s%s%s%s",to(a),to(b),to(c),to(d)); return buffer; }
 char* to(const char *a, const char *b,const char *c,const char *d,const char *e) {  sprintf(buffer,"%s%s%s%s%s",to(a),to(b),to(c),to(d),to(e)); return buffer; }
-
-char* to(String str) {  
-  if(str==NULL || str==EMPTYSTRING) { return NULL; } 
-  char* s = (char*)malloc(str.length() + 1); 
-  if(s==NULL) { espRestart("to() memory error"); }
-  strcpy(s, str.c_str());
-  return s;
-}
-char* to(String str,char* def) {  if(str==NULL || str==EMPTYSTRING) { return def; } int len  =str.length()+1; if(len==0) { return def; } char ca[len]; str.toCharArray(ca,len); return(ca);}
 
 /* convert cahr* to string */
 String toString(const char *text) {  if(!is(text)) { return EMPTYSTRING; } return String(text); }

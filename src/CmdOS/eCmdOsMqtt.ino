@@ -36,7 +36,7 @@ char* mqttInfo() {
   if(!is(eeBoot.mqtt) || !is(mqttUser) || !is(mqttServer) ) { return "mqtt not defined"; }
   char *type="mqtt"; if(mqttSSL) { type="mqtts"; }  
   if(is(mqttUser)) {
-    sprintf(buffer,"MQTT status:%d  %s://%s:%d@%s:%d (ee:%s)",
+    sprintf(buffer,"MQTT status:%d type:%s user:%s pas:%d server:%s port:%d (ee:%s)",
       mqttStatus,type,to(mqttUser),is(mqttPas),to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;
   }else { sprintf(buffer,"MQTT status:%d  %s://%s:%d (ee:%s)",mqttStatus,type,to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;}
 }
@@ -64,7 +64,7 @@ void mqttSetUrl(char* mqttUrl) {
    mqttPort=atoi(port);
 
    sprintf(buffer,"MQTT set ssl:%d server:%s port:%d user:%s pas:%s", mqttSSL, to(mqttServer),mqttPort,to(mqttUser),to(mqttPas));  logPrintln(LOG_INFO,buffer);
-   delete[] mqtt;
+//TODO memory leek here   delete[] mqtt; 
 }
 
 /* set mqtt url */
@@ -120,14 +120,15 @@ void publishTopic(char* topic,char *message) {
 
 /** subcribe topic to attr **/
 void mqttAttr(char *topic,boolean on) {
-  if(mqttStatus != 2) { return ; }
-  char* t=copy(topic);
+  if(mqttStatus != 2) { return ; }  
   sprintf(buffer,"MQTT attr via topic %s",topic);
   if(on) { 
+    if(attrHave(topic)) {  return ; } // alrady have
+    char* t=copy(topic);
     attrMap.replace(t,(char*)"",0); boolean ok=mqttClient->subscribe(t); 
     sprintf(buffer,"MQTT subsrcibe '%s' attr:%s", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } else { 
-    boolean ok=mqttClient->unsubscribe(t); attrMap.del(t); 
+    boolean ok=mqttClient->unsubscribe(t); attrMap.del(topic); 
     sprintf(buffer,"MQTT unsubsrcibe '%s' attr:%s ok:%d", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } 
 }
@@ -217,6 +218,9 @@ void mqttDisconnect() {
   mqttRunning=false;
 }
 
+void mqttOpen(boolean on) {
+  if(on) { mqttInit(); } else { mqttDisconnect(); }
+}
 //-------------------------------------------------------------------------------------
 
 void mqttSetup() {

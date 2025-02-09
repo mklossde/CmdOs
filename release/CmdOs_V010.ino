@@ -196,7 +196,7 @@ List attrMap(true);
 
 //-----------------------------------------------------------------------------
 
-/* copy org* to new by ALLOCATE NEW MEMORY 
+/* copy org* to new (NEW CHAR[]
     e.g. char* n=copy(old); 
 */
 char* copy(char* org) { 
@@ -207,7 +207,7 @@ char* copy(char* org) {
   return newStr;
 }
 
-/* create a copy of org with new char[max] */
+/* create a copy of org with new char[max] (NEW CHAR[])*/
 char* copy(char *to,char* org,int max) { 
   if(to==NULL) { to=new char[max+1]; }
   if(to==NULL) { espRestart("copy() memory error"); }
@@ -218,6 +218,7 @@ char* copy(char *to,char* org,int max) {
   return to;
 }
 
+/* copy (MALLOC) */
 char* copy(char *to,String str,int max) { 
   if(to==NULL) { to = (char*)malloc((max + 1)*sizeof(char));  }     
   if(to==NULL) { espRestart("copy() memory error"); }
@@ -227,6 +228,20 @@ char* copy(char *to,String str,int max) {
   }
   return to;
 }
+
+char* copys(String str) {  
+  if(str==NULL || str==EMPTYSTRING) { return NULL; } 
+  char* s = (char*)malloc(str.length() + 1); 
+  if(s==NULL) { espRestart("to() memory error"); }
+  strcpy(s, str.c_str());
+  return s;
+}
+char* copy(String str,char* def) {  
+  if(str==NULL || str==EMPTYSTRING) { return def; } 
+  int len  =str.length()+1; if(len==0) { return def; } char ca[len]; str.toCharArray(ca,len); return(ca);
+}
+
+//------------------------------------
 
 
 /* replace all old_car with new_cahr in str 
@@ -258,6 +273,7 @@ boolean startWith(char *str,char *find) {
   return strcmp(str, find) == 0;
 }
 
+/** extract from src (NEW char[]) */
 char* extract(char *start, char *end, char *src) {
     const char *start_ptr = strstr(src, start); if (!start_ptr) { return NULL; }
     start_ptr += strlen(start);  // Move past 'start'
@@ -316,15 +332,6 @@ char* to(char *a,char *b) { sprintf(buffer,"%s%s",to(a),to(b)); return buffer; }
 char* to(const char *a, const char *b,const char *c) {  sprintf(buffer,"%s%s%s",to(a),to(b),to(c)); return buffer; }
 char* to(const char *a, const char *b,const char *c,const char *d) {  sprintf(buffer,"%s%s%s%s",to(a),to(b),to(c),to(d)); return buffer; }
 char* to(const char *a, const char *b,const char *c,const char *d,const char *e) {  sprintf(buffer,"%s%s%s%s%s",to(a),to(b),to(c),to(d),to(e)); return buffer; }
-
-char* to(String str) {  
-  if(str==NULL || str==EMPTYSTRING) { return NULL; } 
-  char* s = (char*)malloc(str.length() + 1); 
-  if(s==NULL) { espRestart("to() memory error"); }
-  strcpy(s, str.c_str());
-  return s;
-}
-char* to(String str,char* def) {  if(str==NULL || str==EMPTYSTRING) { return def; } int len  =str.length()+1; if(len==0) { return def; } char ca[len]; str.toCharArray(ca,len); return(ca);}
 
 /* convert cahr* to string */
 String toString(const char *text) {  if(!is(text)) { return EMPTYSTRING; } return String(text); }
@@ -833,6 +840,7 @@ void fsSetup() {
   void fsFormat() {}
 #endif
 
+
 //-------------------------------------------------------------------------------------------------------------------
 // LED
 
@@ -1101,6 +1109,10 @@ void eeSetMode(byte mode) {
   EEPROM.begin(EEBOOTSIZE);
   EEPROM.put( 5, mode );
   EEPROM.end(); 
+}
+
+void setMode(byte mode) {
+  eeSetMode(mode);
   eeMode=mode;
 }
 
@@ -1143,14 +1155,14 @@ void eeSetup() {
   }else if(eeMode==EE_MODE_ERROR) {
     if(serialEnable) { Serial.println("### MODE ERROR "); }
     setAccess(true);
-    eeSetMode(EE_MODE_SYSERROR); // mark 
+    setMode(EE_MODE_SYSERROR);  // mark 
   } else if(eeMode==EE_MODE_SYSERROR) {
     setAccess(true);
     if(serialEnable) { Serial.println("### MODE SYSERROR "); }
 
   }else if(eeMode==EE_MODE_OK) { 
     if(serialEnable) { Serial.println("### MODE OK -> START"); }
-    eeSetMode(EE_MODE_START); // mark  
+    setMode(EE_MODE_START); // mark  
 
   }else if(eeMode>EE_MODE_WRONG) {
     if(serialEnable) { Serial.println("### MODE RE-INIT"); }
@@ -1171,7 +1183,7 @@ int okWait=10000; // wait 10s before start => ok
 
 void eeLoop() {
   if(eeMode<EE_MODE_ERROR && eeMode>=EE_MODE_START && isTimer(eeTime, okWait)) { 
-    eeSetMode(EE_MODE_OK); // mark  ok after start
+    setMode(EE_MODE_OK);  // mark  ok after start
   }
 }
 
@@ -1199,7 +1211,7 @@ void bootSave() {
 
   // auto set WIFI_CL_TRY when in AP
   if((eeMode<EE_MODE_WIFI_OFF) && is(eeBoot.wifi_ssid) && is(eeBoot.wifi_pas)) {
-    eeSetMode(EE_MODE_WIFI_TRY);
+    setMode(EE_MODE_WIFI_TRY); 
   }
  
   eeSave();
@@ -1249,11 +1261,6 @@ void bootPrivat() {
   sprintf(eeBoot.espPas,user_pas);   // my privat WIFI password of AccessPoint
   sprintf(eeBoot.mqtt,mqtt_default);            // my privat MQTT server
   eeMode=EE_MODE_PRIVAT; // set privat mode 
-}
-
-char* bootMode(int mode) {
-  if(mode>=0) { eeSetMode(mode); }
-  return bootInfo();  
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -1616,7 +1623,7 @@ void wifiConnecting() {
       sprintf(buffer,"WIFI mode:%d Connectd IP:%s Gateway:%s DNS:%s ", eeMode,appIP.c_str(), gw, WiFi.dnsIP().toString()); logPrintln(LOG_SYSTEM,buffer); 
       wifiStat=WIFI_CON_CONNECTED;
 
-      if(eeMode==EE_MODE_WIFI_TRY) { eeSetMode(EE_MODE_OK); eeSave(); } // try => cl  
+      if(eeMode==EE_MODE_WIFI_TRY) { setMode(EE_MODE_OK); } // try => cl  
       ledOff();
 
       // enable services
@@ -1636,7 +1643,7 @@ void wifiConnecting() {
       
       } else if( eeMode == EE_MODE_WIFI_TRY) {  // try faild
         sprintf(buffer,"WIFI error CL-TRY ssid:%s reset to AP", eeBoot.wifi_ssid); logPrintln(LOG_SYSTEM,buffer); 
-        eeSetMode(EE_MODE_SETUP); eeSave(); espRestart("no wifi, fallback setup"); // fallback to AccessPoint on faild try      
+        setMode(EE_MODE_SETUP); espRestart("no wifi, fallback setup"); // fallback to AccessPoint on faild try      
 
       } else {
          //sprintf(buffer,"WIFI error connect ssid:%s mode:%d", eeBoot.wifi_ssid,eeBoot.mode); logPrintln(LOG_SYSTEM,buffer); 
@@ -1666,6 +1673,7 @@ void wifiStart() {
 /* try connect wifi*/
 void wifiTry() {
 //TODO  ledBlinkPattern(0,&ledPattern2Flash); // Blink unlimeted 2Flash
+  eeSetMode(EE_MODE_SETUP); // set FALLBACK ON ERROR
   sprintf(buffer,"WIFI try connecting SSID:%s ...", eeBoot.wifi_ssid); logPrintln(LOG_INFO,buffer); 
   delay(10);  
   WiFi.persistent(false);
@@ -1736,6 +1744,10 @@ void wifiInit() {
     }
 }
 
+char* bootMode(int mode) {
+  if(mode>=0) { setMode(mode); wifiInit(); }
+  sprintf(buffer,"%d",eeMode); return buffer;
+}
 
 //----------------------------
 
@@ -1750,8 +1762,8 @@ void wifiLoop() {
 }
 
 void wifiStart(boolean on) { 
-  wifiEnable=on; if(on) { eeSetMode(EE_MODE_WIFI_TRY); wifiSetup(); } 
-  else { WiFi.mode(WIFI_OFF); eeSetMode(EE_MODE_WIFI_OFF); }
+  wifiEnable=on; if(on) { setMode(EE_MODE_WIFI_TRY); wifiSetup(); } 
+  else { WiFi.mode(WIFI_OFF); setMode(EE_MODE_WIFI_OFF); }
 }
 
 //-------------------------------------------------------------
@@ -1834,7 +1846,7 @@ char* mqttInfo() {
   if(!is(eeBoot.mqtt) || !is(mqttUser) || !is(mqttServer) ) { return "mqtt not defined"; }
   char *type="mqtt"; if(mqttSSL) { type="mqtts"; }  
   if(is(mqttUser)) {
-    sprintf(buffer,"MQTT status:%d  %s://%s:%d@%s:%d (ee:%s)",
+    sprintf(buffer,"MQTT status:%d type:%s user:%s pas:%d server:%s port:%d (ee:%s)",
       mqttStatus,type,to(mqttUser),is(mqttPas),to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;
   }else { sprintf(buffer,"MQTT status:%d  %s://%s:%d (ee:%s)",mqttStatus,type,to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;}
 }
@@ -1862,7 +1874,7 @@ void mqttSetUrl(char* mqttUrl) {
    mqttPort=atoi(port);
 
    sprintf(buffer,"MQTT set ssl:%d server:%s port:%d user:%s pas:%s", mqttSSL, to(mqttServer),mqttPort,to(mqttUser),to(mqttPas));  logPrintln(LOG_INFO,buffer);
-   delete[] mqtt;
+//TODO memory leek here   delete[] mqtt; 
 }
 
 /* set mqtt url */
@@ -1918,14 +1930,15 @@ void publishTopic(char* topic,char *message) {
 
 /** subcribe topic to attr **/
 void mqttAttr(char *topic,boolean on) {
-  if(mqttStatus != 2) { return ; }
-  char* t=copy(topic);
+  if(mqttStatus != 2) { return ; }  
   sprintf(buffer,"MQTT attr via topic %s",topic);
   if(on) { 
+    if(attrHave(topic)) {  return ; } // alrady have
+    char* t=copy(topic);
     attrMap.replace(t,(char*)"",0); boolean ok=mqttClient->subscribe(t); 
     sprintf(buffer,"MQTT subsrcibe '%s' attr:%s", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } else { 
-    boolean ok=mqttClient->unsubscribe(t); attrMap.del(t); 
+    boolean ok=mqttClient->unsubscribe(t); attrMap.del(topic); 
     sprintf(buffer,"MQTT unsubsrcibe '%s' attr:%s ok:%d", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } 
 }
@@ -2015,6 +2028,9 @@ void mqttDisconnect() {
   mqttRunning=false;
 }
 
+void mqttOpen(boolean on) {
+  if(on) { mqttInit(); } else { mqttDisconnect(); }
+}
 //-------------------------------------------------------------------------------------
 
 void mqttSetup() {
@@ -2591,7 +2607,6 @@ void webStart(boolean on) {
   webSetup();
 }
 
-
 // Serial Command Line
 
 unsigned long *cmdTime = new unsigned long(0);
@@ -2669,8 +2684,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "mqtt")) { return mqttSet(p0);  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833")  
   else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(p0);  return EMPTY; } // enable/disbale mqttLog
   else if(equals(cmd,"mqttSend") && isAccess(ACCESS_CHANGE)) { publishTopic(p0,p1); return EMPTY; } // mqtt send topic MESSAGE
-  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttInit(); return EMPTY; }
-  else if(equals(cmd, "mqttDisconnect") && isAccess(ACCESS_READ)) { mqttDisconnect(); return EMPTY; }
+  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(p0)); return EMPTY; }
   else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_READ)) { mqttAttr(p0,toBoolean(p1)); return EMPTY; }
   
   else if(equals(cmd, "run")) { return cmdFile(p0); } // run prg from file 
@@ -2760,7 +2774,8 @@ char* cmdSet(char *a,char *b,char *c) {
 
 //------------------------------------
 
-char* attrGet(char *p) {  return (char*)attrMap.get(p); }
+boolean attrHave(char *key) { return attrMap.find(key)!=-1; }
+char* attrGet(char *key) {  return (char*)attrMap.get(key); }
 void attrSet(char *key,String value) {    if(is(key)) { char *v=(char*)value.c_str(); attrMap.replace(key,v,strlen(v));} }
 void attrSet(char *key,char *value) {  if(is(key)) {attrMap.replace(key,value,strlen(value)); } }
 void attrDel(char *key) { attrMap.del(key); }
@@ -2989,9 +3004,6 @@ void cmdOSLoop() {
   }
   delay(0);
 }
-
-
-
 
 
 

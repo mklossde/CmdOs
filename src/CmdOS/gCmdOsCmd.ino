@@ -76,8 +76,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "mqtt")) { return mqttSet(p0);  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833")  
   else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(p0);  return EMPTY; } // enable/disbale mqttLog
   else if(equals(cmd,"mqttSend") && isAccess(ACCESS_CHANGE)) { publishTopic(p0,p1); return EMPTY; } // mqtt send topic MESSAGE
-  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttInit(); return EMPTY; }
-  else if(equals(cmd, "mqttDisconnect") && isAccess(ACCESS_READ)) { mqttDisconnect(); return EMPTY; }
+  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(p0)); return EMPTY; }
   else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_READ)) { mqttAttr(p0,toBoolean(p1)); return EMPTY; }
   
   else if(equals(cmd, "run")) { return cmdFile(p0); } // run prg from file 
@@ -167,7 +166,8 @@ char* cmdSet(char *a,char *b,char *c) {
 
 //------------------------------------
 
-char* attrGet(char *p) {  return (char*)attrMap.get(p); }
+boolean attrHave(char *key) { return attrMap.find(key)!=-1; }
+char* attrGet(char *key) {  return (char*)attrMap.get(key); }
 void attrSet(char *key,String value) {    if(is(key)) { char *v=(char*)value.c_str(); attrMap.replace(key,v,strlen(v));} }
 void attrSet(char *key,char *value) {  if(is(key)) {attrMap.replace(key,value,strlen(value)); } }
 void attrDel(char *key) { attrMap.del(key); }
