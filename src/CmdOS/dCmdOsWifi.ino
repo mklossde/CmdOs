@@ -42,6 +42,10 @@ eeBoot_t eeBoot;    // bootloader data
 //-------------------------------------------------------------------------------------------------------------------
 // EEPROM
 
+boolean isModeOk() { return eeMode>EE_MODE_AP && eeMode<EE_MODE_ERROR; }
+boolean isModeNoSystemError() { return eeMode<EE_MODE_SYSERROR; }
+
+ 
 
 /* save to ee */
 void eeSave() {

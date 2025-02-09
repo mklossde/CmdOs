@@ -1,6 +1,6 @@
 
 
-void appSetup() {
+void cmdOSSetup() {
   if(serialEnable) { 
     delay(1); Serial.begin(115200); 
     delay(1); Serial.println("----------------------------------------------------------------------------------------------------------------------");
@@ -12,18 +12,18 @@ void appSetup() {
   
   fsSetup();
 
-  if(eeMode<EE_MODE_SYSERROR) {
+  if(isModeNoSystemError()) {
     wifiSetup();  
     otaSetup();
   }
 
-  if(eeMode>EE_MODE_AP && eeMode<EE_MODE_ERROR) {
+  if(isModeOk()) {
     mqttSetup();  
     timeSteup();  
   }
 }
 
-void appLoop() {
+void cmdOSLoop() {
   eeLoop();
   ledLoop(); 
   swLoop(); 
@@ -31,12 +31,12 @@ void appLoop() {
 
   timeLoop();
 
-  if(eeMode<EE_MODE_SYSERROR) {
+  if(isModeNoSystemError()) {
     wifiLoop();
     otaLoop();
   }
 
-  if(eeMode>EE_MODE_AP && eeMode<EE_MODE_ERROR) {
+  if(isModeOk()) {
     mqttLoop();
     webLoop();
     timeLoop();

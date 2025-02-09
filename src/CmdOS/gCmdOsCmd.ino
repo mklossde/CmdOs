@@ -337,7 +337,7 @@ int startupWait=10000; // wait before startup.cmd
 
 void cmdLoop() {
   // serial in
-  if(cmdEnable && isTimer(cmdTime, 10)) { cmdRead(); } // exec cmd 
+  if(serialEnable && isTimer(cmdTime, 10)) { cmdRead(); } // exec cmd 
   // prg
   if(eeMode<EE_MODE_SYSERROR) {
     if(_prgPtr!=NULL && isTimer(_prgTime, _cmdWait)) {  _cmdWait=0; prgLoop();  } 

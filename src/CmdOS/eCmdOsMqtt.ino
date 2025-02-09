@@ -44,7 +44,7 @@ char* mqttInfo() {
 /* split mqtt-url */
 void mqttSetUrl(char* mqttUrl) {
   mqttUser=NULL; mqttPas=NULL; mqttServer=NULL; mqttPort=1833;  
-  if(!is(mqttUrl,1,127)) { logPrintln(LOG_ERROR,"MQTT missing/wrong"); return ; }
+  if(!is(mqttUrl,3,127)) { logPrintln(LOG_ERROR,"MQTT missing/wrong"); return ; }
 
   char *mqtt=copy(mqttUrl);  
    if(strncmp(mqtt, "mqtt://",7)==0) { mqttSSL=false;  } 

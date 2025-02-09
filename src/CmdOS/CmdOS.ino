@@ -16,8 +16,7 @@ const char *mqtt_default = ""; //PRIVAT_MQTTSERVER;     // define in privatdata.
 
 byte MODE_DEFAULT=21; // MODE_WIFI_CL_TRY=21 / MODE_PRIVAT
 
-boolean serialEnable=true; // enable/disbale serial log 
-boolean cmdEnable=true; // enable/disbale serial log 
+boolean serialEnable=true; // enable/disbale serial in/out
 
 boolean wifiEnable=true;  // enable/disbale wifi
 boolean ntpEnable=true; // enable time server
@@ -65,10 +64,15 @@ void webApp() {
 //--------------------------------------------------------------
 
 void setup() {
-  appSetup();
-
+  cmdOSSetup();
+  if(isModeOk()) { 
+    matrixSetup();
+  }  
 }
 
 void loop() {
-  appLoop();
+  cmdOSLoop();
+  if(isModeOk()) { 
+    // all works fine - add loop here 
+  }  
 }

@@ -374,12 +374,13 @@ char* espInfo() {
     return buffer;
 }
 
-/* enlabel info */
+/* enlabel info 
 char* enableInfo() {
    sprintf(buffer,"serialEnable:%d cmdEnable:%d ledEnable:%d swEnable:%d wifiEnable:%d webEnable:%d updateEnable:%d mdnsEnable:%d mqttEnable:%d",
     serialEnable,cmdEnable,ledEnable,swEnable,wifiEnable,webEnable,updateEnable,mdnsEnable,mqttEnable);
    return buffer; 
 }
+*/
 
 //-----------------------------------------------------------------------------
 // Time
