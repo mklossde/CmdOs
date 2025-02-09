@@ -229,7 +229,7 @@ char* copy(char *to,String str,int max) {
   return to;
 }
 
-char* copys(String str) {  
+char* copy(String str) {  
   if(str==NULL || str==EMPTYSTRING) { return NULL; } 
   char* s = (char*)malloc(str.length() + 1); 
   if(s==NULL) { espRestart("to() memory error"); }

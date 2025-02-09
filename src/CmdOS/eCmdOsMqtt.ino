@@ -128,7 +128,7 @@ void mqttAttr(char *topic,boolean on) {
     attrMap.replace(t,(char*)"",0); boolean ok=mqttClient->subscribe(t); 
     sprintf(buffer,"MQTT subsrcibe '%s' attr:%s", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } else { 
-    boolean ok=mqttClient->unsubscribe(t); attrMap.del(topic); 
+    boolean ok=mqttClient->unsubscribe(topic); attrMap.del(topic); 
     sprintf(buffer,"MQTT unsubsrcibe '%s' attr:%s ok:%d", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } 
 }
