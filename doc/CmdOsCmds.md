@@ -159,55 +159,12 @@ GET url and return result
 call http/rest url and execute resposne body as cmd/prg
 	e.g. "cmdRest http://server/example/logExample.cmd" => execute logExample on esp
 
-# mqtt 
- 
-## mqtt SERVER
-set mqtt server e.g. mqtt://admin:pas@192.168.1.1:1833
-
-## mqttLog
-enable/disable mqtt log 
-=> send all logs to device/esp/ESPNAME/log
-
-## mqttSend TOPIC MESSAGE
-send message to topic
-
-## mqttConnect / mqttDisconnect
 
 
-# timer 
-add a tiemr with "timer on sec min hour wday day month *cmd"
-Each sec/min/hour/wday/day/month can be a value or undefined (255)
-on 0=didabeld 1=enabled timer
-The timer will execute the given "cmd" when its time.
-e.g. 
-	'timer 1 0 255 255 255 255 255 log "Hello timer"' => will execute ever minute 
-	'timer 1 0 0 22 255 255 255 "lightOff.cmd"   => will call light Off ever day at 22:00 
-timers => will list all timer (from 0..n)
-timerDel n => will delete timer n 
 
-# filesystem
 
-## fsDir
-list the filesystem to log
 
-## fsCat FILE
-cat the FILE to log
 
-## fsWrite FILE MESSAGE
-write MESSAGE into FILE
-
-## fsDel FILE
-delete FILE
-
-## fsRen FILE NEWFILE
-rename FILE to NEWFILE
-
-## fsDownload URL FILE
-deonload contetn of URL into [FILE] 
-e.g. fsDownload https://www.w3.org/Icons/64x64/home.gif  => fill load url into file "home.gif"
-
-## fsFormat 
-format filesystem
 
 ![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 
 
