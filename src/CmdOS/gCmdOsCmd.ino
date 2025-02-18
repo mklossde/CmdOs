@@ -47,75 +47,76 @@ char* cmdExec(char *cmd, char *param) {
 
   else if(equals(cmd, "freeHeap")) { sprintf(buffer,"%d",ESP.getFreeHeap());ret=buffer; }// show free heap
   
-  else if(equals(cmd, "login")) { cmdLogin(cmdParma(&param)); }
+  else if(equals(cmd, "login")) { cmdLogin(cmdParam(&param)); }
   else if(equals(cmd, "restart")) { espRestart("cmd restart");  }// restart
-  else if(equals(cmd, "sleep")) {  sleep(cmdParma(&param),cmdParma(&param));  }      // sleep TIMEMS MODE (e.g. sleep 5000 0) (TIMEMS=0=>EVER) (MODE=0=>WIFI_OFF)
+  else if(equals(cmd, "sleep")) {  sleep(cmdParam(&param),cmdParam(&param));  }      // sleep TIMEMS MODE (e.g. sleep 5000 0) (TIMEMS=0=>EVER) (MODE=0=>WIFI_OFF)
 
-  else if(equals(cmd, "attr")) { attrSet(cmdParma(&param),cmdParma(&param)); ret=attrInfo(); }
-  else if(equals(cmd, "attrDel")) { attrDel(cmdParma(&param));  }
-  else if(equals(cmd, "attrClear")) { attrClear(cmdParma(&param));  }
+  else if(equals(cmd, "attr")) { attrSet(nextParam(&param),cmdParam(&param)); ret=attrInfo(); }
+  else if(equals(cmd, "attrDel")) { attrDel(cmdParam(&param));  }
+  else if(equals(cmd, "attrClear")) { attrClear(cmdParam(&param));  }
 
-  else if(equals(cmd, "wait")) { cmdWait(toULong(cmdParma(&param))); }// wait for next exec
-  else if(equals(cmd, "goto")) { ret=to(cmdGoto(_prg,cmdParma(&param))); }// goto prg label or skip n steps
-  else if(equals(cmd, "=")) { ret=cmdSet(cmdParma(&param),cmdParma(&param),cmdParma(&param)); }// return p0p1p2
+  else if(equals(cmd, "wait")) { cmdWait(toULong(cmdParam(&param))); }// wait for next exec
+  else if(equals(cmd, "exec")) { cmdExec(cmdParam(&param),param); }// exec 
+  else if(equals(cmd, "goto")) { ret=to(cmdGoto(_prg,cmdParam(&param))); }// goto prg label or skip n steps
+  else if(equals(cmd, "=")) { ret=cmdSet(cmdParam(&param),cmdParam(&param),cmdParam(&param)); }// return p0p1p2
   else if(equals(cmd, "if")) { ret=to(cmdIf(param));  }// if p0 <=> p2 => { }
   else if(equals(cmd, "else")) { ret=to(cmdElse(param)); }// else => {}
   else if(equals(cmd, "elseif")) { ret=to(cmdElseIf(param)); }// else if p0 <=> p2 => { }
   else if(equals(cmd, "until")) { ret=to(cmdUntil(param)); }// {} until p0 <=> p2 
 
-  else if(equals(cmd, "random")) { int r=random(toInt(cmdParma(&param)),toInt(cmdParma(&param)));  sprintf(buffer,"%d",r); ret=buffer;  } // random min-max
-  else if(equals(cmd,"extract")) { ret=extract(cmdParma(&param),cmdParma(&param),cmdParma(&param)); } // extract start end str (e.g  "free:"," " from "value free:1000 colr:1" => 1000)
-  else if(equals(cmd, "reset")) { ret=bootReset(cmdParma(&param)); }// reset eeprom and restart    
+  else if(equals(cmd, "random")) { int r=random(toInt(cmdParam(&param)),toInt(cmdParam(&param)));  sprintf(buffer,"%d",r); ret=buffer;  } // random min-max
+  else if(equals(cmd,"extract")) { ret=extract(cmdParam(&param),cmdParam(&param),cmdParam(&param)); } // extract start end str (e.g  "free:"," " from "value free:1000 colr:1" => 1000)
+  else if(equals(cmd, "reset")) { ret=bootReset(cmdParam(&param)); }// reset eeprom and restart    
 
-  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { ret=setupEsp(cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param)); }// setup wifi-ssid wifi-pas espPas => save&restart
-  else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { ret=setupDev(cmdParma(&param)); } // enable/disable setupDevices
+  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { ret=setupEsp(cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param)); }// setup wifi-ssid wifi-pas espPas => save&restart
+  else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { ret=setupDev(cmdParam(&param)); } // enable/disable setupDevices
   
   else if(equals(cmd, "log")) { sprintf(buffer,"%s %s %s %s %s %s %s %s",
-    cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param)); 
+    cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param)); 
     logPrintln(LOG_INFO,buffer); ret=buffer;}// log
-  else if(equals(cmd, "logLevel")) { ret=setLogLevel(toInt(cmdParma(&param))); }  // set mode (e.g. "mode NR")
+  else if(equals(cmd, "logLevel")) { ret=setLogLevel(toInt(cmdParam(&param))); }  // set mode (e.g. "mode NR")
 
   else if(equals(cmd, "save")) { bootSave();  }// write data to eeprom
   else if(equals(cmd, "load")) { bootRead(); }// load data from eprom
-  else if(equals(cmd, "conf")) {  ret=bootSet(cmdParma(&param),cmdParma(&param),cmdParma(&param)); }      // set esp name and password (e.g. "set" or "set NAME PAS")  
-  else if(equals(cmd,"access")) { setAccessLevel(toInt(cmdParma(&param)));  } // set  AccessLevel (e.g. "access 5")
-  else if(equals(cmd, "wifi")) { ret=wifiSet(cmdParma(&param),cmdParma(&param)); }      // set wifi, restart wifi and info (e.g. "wifi" or "wifi SSID PAS")  
+  else if(equals(cmd, "conf")) {  ret=bootSet(cmdParam(&param),cmdParam(&param),cmdParam(&param)); }      // set esp name and password (e.g. "set" or "set NAME PAS")  
+  else if(equals(cmd,"access")) { setAccessLevel(toInt(cmdParam(&param)));  } // set  AccessLevel (e.g. "access 5")
+  else if(equals(cmd, "wifi")) { ret=wifiSet(cmdParam(&param),cmdParam(&param)); }      // set wifi, restart wifi and info (e.g. "wifi" or "wifi SSID PAS")  
   else if(equals(cmd, "scan")) {  ret=wifiScan(); }         // scan wifi (e.g. "scan")
-  else if(equals(cmd, "time")) { ret=timeSet(cmdParma(&param),cmdParma(&param)); }       // set time (e.g. "time" or "time TIMEINMS")
-  else if(equals(cmd, "mode")) { ret=bootMode(toInt(cmdParma(&param))); }  // set mode (e.g. "mode NR")
+  else if(equals(cmd, "time")) { ret=timeSet(cmdParam(&param),cmdParam(&param)); }       // set time (e.g. "time" or "time TIMEINMS")
+  else if(equals(cmd, "mode")) { ret=bootMode(toInt(cmdParam(&param))); }  // set mode (e.g. "mode NR")
   
-  else if(equals(cmd, "ping")) {  ret=cmdPing(cmdParma(&param)); }         // wifi ping  (e.g. "ping web.de")
-  else if(equals(cmd, "dns")) {  ret=netDns(cmdParma(&param)); }         // wifi dns resolve (e.g. "dns web.de")
+  else if(equals(cmd, "ping")) {  ret=cmdPing(cmdParam(&param)); }         // wifi ping  (e.g. "ping web.de")
+  else if(equals(cmd, "dns")) {  ret=netDns(cmdParam(&param)); }         // wifi dns resolve (e.g. "dns web.de")
 
-  else if(equals(cmd, "mqtt")) { ret=mqttSet(cmdParma(&param));  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833")  
-  else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(cmdParma(&param));   } // enable/disbale mqttLog
-  else if(equals(cmd,"mqttSend") && isAccess(ACCESS_CHANGE)) { publishTopic(cmdParma(&param),cmdParma(&param));  } // mqtt send topic MESSAGE
-  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(cmdParma(&param)));  }
-  else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_READ)) { mqttAttr(cmdParma(&param),toBoolean(cmdParma(&param)));  }
+  else if(equals(cmd, "mqtt")) { ret=mqttSet(cmdParam(&param));  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833")  
+  else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(cmdParam(&param));   } // enable/disbale mqttLog
+  else if(equals(cmd,"mqttSend") && isAccess(ACCESS_CHANGE)) { publishTopic(cmdParam(&param),cmdParam(&param));  } // mqtt send topic MESSAGE
+  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(cmdParam(&param)));  }
+  else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_READ)) { mqttAttr(cmdParam(&param),toBoolean(cmdParam(&param)));  }
   
-  else if(equals(cmd, "run")) { ret=cmdFile(cmdParma(&param)); } // run prg from file 
+  else if(equals(cmd, "run")) { ret=cmdFile(cmdParam(&param)); } // run prg from file 
   else if(equals(cmd, "end")) { ret=cmdFile(NULL); }// stop prg
   else if(equals(cmd, "stop")) { ret=prgStop(); } // stop/halt prg
   else if(equals(cmd, "continue")) { ret=prgContinue(); } // continue prg
-  else if(equals(cmd, "next")) { ret=prgNext(cmdParma(&param)); } // next prg step
-  else if(equals(cmd, "error")) { cmdError(cmdParma(&param));  }// end prg with error
+  else if(equals(cmd, "next")) { ret=prgNext(cmdParam(&param)); } // next prg step
+  else if(equals(cmd, "error")) { cmdError(cmdParam(&param));  }// end prg with error
 
-  else if(equals(cmd, "fsDir") && isAccess(ACCESS_READ)) { ret=fsDir(toString(cmdParma(&param))); }
-  else if(equals(cmd, "fsCat") && isAccess(ACCESS_READ)) { fsCat(toString(cmdParma(&param)));  }
-  else if(equals(cmd, "fsWrite") && isAccess(ACCESS_CHANGE) ) { boolean ok=fsWrite(toString(cmdParma(&param)),cmdParma(&param)); }
-  else if(equals(cmd, "fsDel") && isAccess(ACCESS_CHANGE)) { fsDelete(toString(cmdParma(&param))); }
-  else if(equals(cmd, "fsRen") && isAccess(ACCESS_CHANGE)) { fsRename(toString(cmdParma(&param)),toString(cmdParma(&param)));  }  
+  else if(equals(cmd, "fsDir") && isAccess(ACCESS_READ)) { ret=fsDir(toString(cmdParam(&param))); }
+  else if(equals(cmd, "fsCat") && isAccess(ACCESS_READ)) { fsCat(toString(cmdParam(&param)));  }
+  else if(equals(cmd, "fsWrite") && isAccess(ACCESS_CHANGE) ) { boolean ok=fsWrite(toString(cmdParam(&param)),cmdParam(&param)); }
+  else if(equals(cmd, "fsDel") && isAccess(ACCESS_CHANGE)) { fsDelete(toString(cmdParam(&param))); }
+  else if(equals(cmd, "fsRen") && isAccess(ACCESS_CHANGE)) { fsRename(toString(cmdParam(&param)),toString(cmdParam(&param)));  }  
   else if(equals(cmd, "fsFormat") && isAccess(ACCESS_ADMIN)) { fsFormat();  }
 
-  else if(equals(cmd, "fsDownload") && isAccess(ACCESS_CHANGE)) { ret=fsDownload(toString(cmdParma(&param)),toString(cmdParma(&param))); }
-  else if(equals(cmd, "rest")) { ret=rest(cmdParma(&param)); } // 
-  else if(equals(cmd, "cmdRest")) { ret=cmdRest(cmdParma(&param)); } // call http/rest and exute retur nbody as cmd
+  else if(equals(cmd, "fsDownload") && isAccess(ACCESS_CHANGE)) { ret=fsDownload(toString(cmdParam(&param)),toString(cmdParam(&param))); }
+  else if(equals(cmd, "rest")) { ret=rest(cmdParam(&param)); } // 
+  else if(equals(cmd, "cmdRest")) { ret=cmdRest(cmdParam(&param)); } // call http/rest and exute retur nbody as cmd
 
   // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
-  else if(equals(cmd, "timer") && isAccess(ACCESS_CHANGE)) { timerAdd(toBoolean(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),cmdParma(&param));  }
-  else if(equals(cmd, "timerDel") && isAccess(ACCESS_CHANGE)) { timerDel(toInt(cmdParma(&param)));  }
+  else if(equals(cmd, "timer") && isAccess(ACCESS_CHANGE)) { timerAdd(toBoolean(cmdParam(&param)),toInt(cmdParam(&param)),toInt(cmdParam(&param)),toInt(cmdParam(&param)),toInt(cmdParam(&param)),toInt(cmdParam(&param)),toInt(cmdParam(&param)),cmdParam(&param));  }
+  else if(equals(cmd, "timerDel") && isAccess(ACCESS_CHANGE)) { timerDel(toInt(cmdParam(&param)));  }
   else if(equals(cmd, "timerGet") && isAccess(ACCESS_READ)) { 
-      MyEventTimer* timer=(MyEventTimer*)eventList.get(toInt(cmdParma(&param))); 
+      MyEventTimer* timer=(MyEventTimer*)eventList.get(toInt(cmdParam(&param))); 
       if(timer!=NULL) { ret=timer->info(); } 
     }
   else if(equals(cmd, "timers") && isAccess(ACCESS_READ)) { timerLog();  }
@@ -214,7 +215,7 @@ boolean gotoSubEnd(char *prgPtr) {
 
 /* start sub on "ok" otherweise skip until }  */
 boolean startSub(char *param,boolean ok) {
-  char *cmdOnTrue=cmdParma(&param);
+  char *cmdOnTrue=nextParam(&param);
   if(equals(cmdOnTrue,"{")) {
     if(ok)  { return true; } // on true => execute next line 
     else { return gotoSubEnd(_prgPtr); }
@@ -232,9 +233,9 @@ boolean repeatSub(char *param) {
 
 /* resolve/caclute param of if */
 boolean calcIf(char *param) {
-  char *a=cmdParma(&param);
-  char *match=cmdParma(&param);
-  char *b=cmdParma(&param);
+  char *a=cmdParam(&param);
+  char *match=cmdParam(&param);
+  char *b=cmdParam(&param);
 
   int ai=toInt(a),bi=toInt(b);
   boolean ok=false;
@@ -321,7 +322,7 @@ boolean pIsCalc(char *param) {
 //--------------------------------
 
 /* read next param */
-char* cmdParma(char **pp) {
+char* cmdParam(char **pp) {
     if(pp==NULL || *pp==NULL || **pp=='\0') { return EMPTY; }
     while(**pp==' ' || **pp=='\t') { (*pp)++; } // skip spaces and tabs
     
@@ -343,10 +344,17 @@ char* cmdParma(char **pp) {
     return p1;
 }
 
+char* nextParam(char **pp) {
+    if(pp==NULL || *pp==NULL || **pp=='\0') { return EMPTY; }
+    while(**pp==' ' || **pp=='\t') { (*pp)++; } // skip spaces and tabs
+    if(pp==NULL || *pp==NULL || **pp=='\0') { return EMPTY; }
+    char* cmd = strtok_r(NULL, " ",pp); 
+    if(cmd==NULL) { return EMPTY; } else { return cmd; }
+}
 
 /* set $key CMD */
 char* cmdAttr(char *key,char *param) {
-  char *cmd=cmdParma(&param);
+  char *cmd=nextParam(&param);
   char *ret=cmdExec(cmd, param);
   if(key!=NULL) { attrSet(key,ret);  } 
   return ret;
@@ -354,7 +362,9 @@ char* cmdAttr(char *key,char *param) {
 
 /* parse and execute a cmd line */
 char* cmdLine(char* line) {  
-  return cmdParma(&line);
+//  return cmdParam(&line);
+  char* cmd=nextParam(&line);
+  return cmdExec(cmd,line);
 }
 
 //--------------------------------
