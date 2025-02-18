@@ -485,9 +485,11 @@ void webSetup() {
     ;
     sprintf(buffer, "WebUpdate started /update");
     logPrintln(LOG_DEBUG,buffer);
-#ifdef ESP32
+
+#if otaEnable && defined(ESP32) 
     Update.onProgress(webProgress);
 #endif
+
   }
 
   //File Manager

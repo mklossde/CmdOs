@@ -242,6 +242,8 @@ void mqttLoop() {
 }
 
 #else
+  void mqttSetUrl(char* mqttUrl) {}
+  void mqttOpen(boolean on) {}
   void mqttInit() {}
   void mqttDisconnect() { }
   char* mqttSet(char* mqtt) { return NULL; }
@@ -249,4 +251,5 @@ void mqttLoop() {
   void mqttLoop() {}
   void mqttLog(char *message) {}
   void publishTopic(char* topic,char *message) {} 
+  void mqttAttr(char *topic,boolean on) {}
 #endif

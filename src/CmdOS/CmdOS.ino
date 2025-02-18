@@ -28,9 +28,9 @@ boolean bootSafe=true;    // enable/disbale boot safe
 
 #define netEnable true       // enable/disbale network ping/dns/HttpCLient 
 #define webSerialEnable false // enable/disbale web serial
-#define mqttEnable true      // enable/disbale mqtt
+#define mqttEnable false      // enable/disbale mqtt
 
-#define otaEnable true        // enabled/disbale ota update 
+#define otaEnable false        // enabled/disbale ota update 
 #define updateEnable false     // enabled/disbale update firmware via web 
 
 #define ledEnable false       // enable/disbale serial
@@ -48,8 +48,8 @@ AsyncWebServer server(_webPort);
 //--------------------------------------------------------------
 
 
-char* appCmd(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,char *p6,char *p7,char *p8,char *p9) {
-    return "unkown cmd";
+char* appCmd(char *cmd, char *param) {
+  return cmd; // unkown cmd => use cmd as string
 }
 
 //--------------------------------------------------------------

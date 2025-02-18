@@ -10,6 +10,10 @@ char inData [maxInData]; // read buffer
 char inIndex = 0; // read index
 char prgLine [maxInData]; // prgLine buffer
 
+char* _prg=NULL;
+char *_prgPtr=NULL;
+boolean prgLog=true; // show each prg step in log
+boolean _lastIf=false;
 
 char* appInfo() {
    sprintf(buffer,"AppInfo %s %s CmdOs:%s bootType:%s login:%d access_level:%d",
@@ -29,90 +33,107 @@ boolean cmdLogin(char *p) {
 }
 
 // execute cmd 
-char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,char *p6,char *p7,char *p8,char *p9) {
-  if(cmd==NULL || sizeof(cmd)==0) { return EMPTY; } 
-  sprintf(buffer,"CMD :%s:%s:%s:%s:%s:%s:%s:%s:%s:",cmd,p0,p1,p2,p3,p4,p5,p6,p7,p8,p9); logPrintln(LOG_DEBUG,buffer); 
+char* cmdExec(char *cmd, char *param) {  
+  if(!is(cmd)) { return EMPTY; } 
+  sprintf(buffer,"->%s %s",cmd,to(param)); logPrintln(LOG_DEBUG,buffer); 
 
-  if(equals(cmd, "?")) { return cmdInfo(); }
-  else if(equals(cmd, "esp")) { return espInfo();  }// show esp status
-  else if(equals(cmd, "stat")) { return appInfo(); }// show esp status
+  char *ret= EMPTY;
+  if(_skipCmd>0 || cmd[0]=='#') { _skipCmd--;  logPrintln(LOG_DEBUG,"skip");  } // skip line or comment   
+  else if(cmd[0]=='$') { ret=cmdAttr(cmd,param);  }
 
-  else if(equals(cmd, "freeHeap")) { sprintf(buffer,"%d",ESP.getFreeHeap());return buffer; }// show free heap
+  else if(equals(cmd, "?")) { ret=cmdInfo(); }
+  else if(equals(cmd, "esp")) { ret=espInfo();  }// show esp status
+  else if(equals(cmd, "stat")) { ret=appInfo(); }// show esp status
+
+  else if(equals(cmd, "freeHeap")) { sprintf(buffer,"%d",ESP.getFreeHeap());ret=buffer; }// show free heap
   
-  else if(equals(cmd, "login")) { cmdLogin(p0); return EMPTY;}
-  else if(equals(cmd, "restart")) { espRestart("cmd restart"); return EMPTY; }// restart
-  else if(equals(cmd, "sleep")) {  sleep(p0,p1); return EMPTY; }      // sleep TIMEMS MODE (e.g. sleep 5000 0) (TIMEMS=0=>EVER) (MODE=0=>WIFI_OFF)
+  else if(equals(cmd, "login")) { cmdLogin(cmdParma(&param)); }
+  else if(equals(cmd, "restart")) { espRestart("cmd restart");  }// restart
+  else if(equals(cmd, "sleep")) {  sleep(cmdParma(&param),cmdParma(&param));  }      // sleep TIMEMS MODE (e.g. sleep 5000 0) (TIMEMS=0=>EVER) (MODE=0=>WIFI_OFF)
 
-  else if(equals(cmd, "attr")) { attrSet(p0,p1); return attrInfo(); }
-  else if(equals(cmd, "attrDel")) { attrDel(p0); return EMPTY;  }
-  else if(equals(cmd, "attrClear")) { attrClear(p0); return EMPTY;  }
+  else if(equals(cmd, "attr")) { attrSet(cmdParma(&param),cmdParma(&param)); ret=attrInfo(); }
+  else if(equals(cmd, "attrDel")) { attrDel(cmdParma(&param));  }
+  else if(equals(cmd, "attrClear")) { attrClear(cmdParma(&param));  }
 
-  else if(equals(cmd, "wait")) { cmdWait(toULong(p0)); return EMPTY; }// wait for next exec
-  else if(equals(cmd, "goto")) { boolean ok=cmdGoto(p0); sprintf(buffer,"%d",ok); return buffer; }// goto prg label or skip n steps
-  else if(equals(cmd, "=")) { return cmdSet(p0,p1,p2); }// return p0p1p2
-  else if(equals(cmd, "if")) { boolean ok=cmdIf(p0,p1,p2,p3); sprintf(buffer,"%d",ok); return buffer; }// if p0 <=> p2 => skip p4
-  else if(equals(cmd, "random")) { int r=random(toInt(p0),toInt(p1));  sprintf(buffer,"%d",r); return buffer;  } // random min-max
-  else if(equals(cmd,"extract")) { return extract(p0,p1,p2); } // extract start end str (e.g  "free:"," " from "value free:1000 colr:1" => 1000)
-  else if(equals(cmd, "reset")) { return bootReset(p0); }// reset eeprom and restart    
+  else if(equals(cmd, "wait")) { cmdWait(toULong(cmdParma(&param))); }// wait for next exec
+  else if(equals(cmd, "goto")) { ret=to(cmdGoto(_prg,cmdParma(&param))); }// goto prg label or skip n steps
+  else if(equals(cmd, "=")) { ret=cmdSet(cmdParma(&param),cmdParma(&param),cmdParma(&param)); }// return p0p1p2
+  else if(equals(cmd, "if")) { ret=to(cmdIf(param));  }// if p0 <=> p2 => { }
+  else if(equals(cmd, "else")) { ret=to(cmdElse(param)); }// else => {}
+  else if(equals(cmd, "elseif")) { ret=to(cmdElseIf(param)); }// else if p0 <=> p2 => { }
+  else if(equals(cmd, "until")) { ret=to(cmdUntil(param)); }// {} until p0 <=> p2 
 
-  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { return setupEsp(p0,p1,p2,p3,p4); }// setup wifi-ssid wifi-pas espPas => save&restart
-  else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { return setupDev(p0); } // enable/disable setupDevices
+  else if(equals(cmd, "random")) { int r=random(toInt(cmdParma(&param)),toInt(cmdParma(&param)));  sprintf(buffer,"%d",r); ret=buffer;  } // random min-max
+  else if(equals(cmd,"extract")) { ret=extract(cmdParma(&param),cmdParma(&param),cmdParma(&param)); } // extract start end str (e.g  "free:"," " from "value free:1000 colr:1" => 1000)
+  else if(equals(cmd, "reset")) { ret=bootReset(cmdParma(&param)); }// reset eeprom and restart    
+
+  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { ret=setupEsp(cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param)); }// setup wifi-ssid wifi-pas espPas => save&restart
+  else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { ret=setupDev(cmdParma(&param)); } // enable/disable setupDevices
   
-  else if(equals(cmd, "log")) { sprintf(buffer,"%s %s %s %s %s %s %s %s",p0,p1,p2,p3,p4,p5,p6,p7); logPrintln(LOG_INFO,buffer); return EMPTY;}// log
-  else if(equals(cmd, "logLevel")) { return setLogLevel(toInt(p0)); }  // set mode (e.g. "mode NR")
+  else if(equals(cmd, "log")) { sprintf(buffer,"%s %s %s %s %s %s %s %s",
+    cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param),cmdParma(&param)); 
+    logPrintln(LOG_INFO,buffer); ret=buffer;}// log
+  else if(equals(cmd, "logLevel")) { ret=setLogLevel(toInt(cmdParma(&param))); }  // set mode (e.g. "mode NR")
 
-  else if(equals(cmd, "save")) { bootSave(); return EMPTY; }// write data to eeprom
-  else if(equals(cmd, "load")) { bootRead(); return EMPTY;  }// load data from eprom
-  else if(equals(cmd, "conf")) {  return bootSet(p0,p1,p3); }      // set esp name and password (e.g. "set" or "set NAME PAS")  
-  else if(equals(cmd,"access")) { setAccessLevel(toInt(p0)); return EMPTY; } // set  AccessLevel (e.g. "access 5")
-  else if(equals(cmd, "wifi")) { return wifiSet(p0,p1); }      // set wifi, restart wifi and info (e.g. "wifi" or "wifi SSID PAS")  
-  else if(equals(cmd, "scan")) {  return wifiScan(); }         // scan wifi (e.g. "scan")
-  else if(equals(cmd, "time")) { return timeSet(p0,p1); }       // set time (e.g. "time" or "time TIMEINMS")
-  else if(equals(cmd, "mode")) { return bootMode(toInt(p0)); }  // set mode (e.g. "mode NR")
+  else if(equals(cmd, "save")) { bootSave();  }// write data to eeprom
+  else if(equals(cmd, "load")) { bootRead(); }// load data from eprom
+  else if(equals(cmd, "conf")) {  ret=bootSet(cmdParma(&param),cmdParma(&param),cmdParma(&param)); }      // set esp name and password (e.g. "set" or "set NAME PAS")  
+  else if(equals(cmd,"access")) { setAccessLevel(toInt(cmdParma(&param)));  } // set  AccessLevel (e.g. "access 5")
+  else if(equals(cmd, "wifi")) { ret=wifiSet(cmdParma(&param),cmdParma(&param)); }      // set wifi, restart wifi and info (e.g. "wifi" or "wifi SSID PAS")  
+  else if(equals(cmd, "scan")) {  ret=wifiScan(); }         // scan wifi (e.g. "scan")
+  else if(equals(cmd, "time")) { ret=timeSet(cmdParma(&param),cmdParma(&param)); }       // set time (e.g. "time" or "time TIMEINMS")
+  else if(equals(cmd, "mode")) { ret=bootMode(toInt(cmdParma(&param))); }  // set mode (e.g. "mode NR")
   
-  else if(equals(cmd, "ping")) {  return cmdPing(p0); }         // wifi ping  (e.g. "ping web.de")
-  else if(equals(cmd, "dns")) {  return netDns(p0); }         // wifi dns resolve (e.g. "dns web.de")
+  else if(equals(cmd, "ping")) {  ret=cmdPing(cmdParma(&param)); }         // wifi ping  (e.g. "ping web.de")
+  else if(equals(cmd, "dns")) {  ret=netDns(cmdParma(&param)); }         // wifi dns resolve (e.g. "dns web.de")
 
-  else if(equals(cmd, "mqtt")) { return mqttSet(p0);  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833")  
-  else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(p0);  return EMPTY; } // enable/disbale mqttLog
-  else if(equals(cmd,"mqttSend") && isAccess(ACCESS_CHANGE)) { publishTopic(p0,p1); return EMPTY; } // mqtt send topic MESSAGE
-  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(p0)); return EMPTY; }
-  else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_READ)) { mqttAttr(p0,toBoolean(p1)); return EMPTY; }
+  else if(equals(cmd, "mqtt")) { ret=mqttSet(cmdParma(&param));  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833")  
+  else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(cmdParma(&param));   } // enable/disbale mqttLog
+  else if(equals(cmd,"mqttSend") && isAccess(ACCESS_CHANGE)) { publishTopic(cmdParma(&param),cmdParma(&param));  } // mqtt send topic MESSAGE
+  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(cmdParma(&param)));  }
+  else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_READ)) { mqttAttr(cmdParma(&param),toBoolean(cmdParma(&param)));  }
   
-  else if(equals(cmd, "run")) { return cmdFile(p0); } // run prg from file 
-  else if(equals(cmd, "stop")) { return prgStop(); } // stop/halt prg
-  else if(equals(cmd, "continue")) { return prgContinue(); } // continue prg
-  else if(equals(cmd, "next")) { return prgNext(p0); } // next prg step
+  else if(equals(cmd, "run")) { ret=cmdFile(cmdParma(&param)); } // run prg from file 
+  else if(equals(cmd, "end")) { ret=cmdFile(NULL); }// stop prg
+  else if(equals(cmd, "stop")) { ret=prgStop(); } // stop/halt prg
+  else if(equals(cmd, "continue")) { ret=prgContinue(); } // continue prg
+  else if(equals(cmd, "next")) { ret=prgNext(cmdParma(&param)); } // next prg step
+  else if(equals(cmd, "error")) { cmdError(cmdParma(&param));  }// end prg with error
 
-  else if(equals(cmd, "fsDir") && isAccess(ACCESS_READ)) { return fsDir(); }
-  else if(equals(cmd, "fsCat") && isAccess(ACCESS_READ)) { fsCat(toString(p0)); return EMPTY; }
-  else if(equals(cmd, "fsWrite") && isAccess(ACCESS_CHANGE) ) { boolean ok=fsWrite(toString(p0),p1); return EMPTY;}
-  else if(equals(cmd, "fsDel") && isAccess(ACCESS_CHANGE)) { fsDelete(toString(p0)); return EMPTY; }
-  else if(equals(cmd, "fsRen") && isAccess(ACCESS_CHANGE)) { fsRename(toString(p0),toString(p1)); return EMPTY; }  
-  else if(equals(cmd, "fsFormat") && isAccess(ACCESS_ADMIN)) { fsFormat(); return EMPTY; }
+  else if(equals(cmd, "fsDir") && isAccess(ACCESS_READ)) { ret=fsDir(toString(cmdParma(&param))); }
+  else if(equals(cmd, "fsCat") && isAccess(ACCESS_READ)) { fsCat(toString(cmdParma(&param)));  }
+  else if(equals(cmd, "fsWrite") && isAccess(ACCESS_CHANGE) ) { boolean ok=fsWrite(toString(cmdParma(&param)),cmdParma(&param)); }
+  else if(equals(cmd, "fsDel") && isAccess(ACCESS_CHANGE)) { fsDelete(toString(cmdParma(&param))); }
+  else if(equals(cmd, "fsRen") && isAccess(ACCESS_CHANGE)) { fsRename(toString(cmdParma(&param)),toString(cmdParma(&param)));  }  
+  else if(equals(cmd, "fsFormat") && isAccess(ACCESS_ADMIN)) { fsFormat();  }
 
-  else if(equals(cmd, "fsDownload") && isAccess(ACCESS_CHANGE)) { return fsDownload(toString(p0),toString(p1)); }
-  else if(equals(cmd, "rest")) { return rest(p0); } // 
-  else if(equals(cmd, "cmdRest")) { return cmdRest(p0); } // call http/rest and exute retur nbody as cmd
+  else if(equals(cmd, "fsDownload") && isAccess(ACCESS_CHANGE)) { ret=fsDownload(toString(cmdParma(&param)),toString(cmdParma(&param))); }
+  else if(equals(cmd, "rest")) { ret=rest(cmdParma(&param)); } // 
+  else if(equals(cmd, "cmdRest")) { ret=cmdRest(cmdParma(&param)); } // call http/rest and exute retur nbody as cmd
 
   // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
-  else if(equals(cmd, "timer") && isAccess(ACCESS_CHANGE)) { timerAdd(toBoolean(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),p7); return EMPTY; }
-  else if(equals(cmd, "timerDel") && isAccess(ACCESS_CHANGE)) { timerDel(toInt(p0)); return EMPTY; }
+  else if(equals(cmd, "timer") && isAccess(ACCESS_CHANGE)) { timerAdd(toBoolean(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),toInt(cmdParma(&param)),cmdParma(&param));  }
+  else if(equals(cmd, "timerDel") && isAccess(ACCESS_CHANGE)) { timerDel(toInt(cmdParma(&param)));  }
   else if(equals(cmd, "timerGet") && isAccess(ACCESS_READ)) { 
-      MyEventTimer* timer=(MyEventTimer*)eventList.get(toInt(p0)); 
-      if(timer!=NULL) { return timer->info(); } else{ return EMPTY; }
+      MyEventTimer* timer=(MyEventTimer*)eventList.get(toInt(cmdParma(&param))); 
+      if(timer!=NULL) { ret=timer->info(); } 
     }
-  else if(equals(cmd, "timers") && isAccess(ACCESS_READ)) { timerLog(); return EMPTY; }
+  else if(equals(cmd, "timers") && isAccess(ACCESS_READ)) { timerLog();  }
 
-  else { return appCmd(cmd,p0,p1,p2,p3,p4,p5,p6,p7,p8,p9); }
+  else { ret=appCmd(cmd,param); }
 
+  logPrintln(LOG_DEBUG,ret);  // show return
+  return ret;
 }
 
-//------------------------------------------------------------------------------------------------
+/* log unkown cmd and return EMPTY
+char* cmdUnkown(char* cmd,char *param) {
+  sprintf(buffer,"unkown '%s'",cmd); logPrintln(LOG_ERROR,buffer);
+  return EMPTY;
+}
+*/
 
-char* _prg=NULL;
-char *_prgPtr=NULL;
-boolean prgLog=true; // show each prg step in log
+//------------------------------------------------------------------------------------------------
 
 unsigned long *_prgTime = new unsigned long(0);
 unsigned long _cmdWait= -1; // wait before next cmd time in ms (-1=do not wait, 1000=1s)
@@ -120,12 +141,30 @@ unsigned long _cmdWait= -1; // wait before next cmd time in ms (-1=do not wait, 
 /* wait in prg for time in ms, until next step */
 void cmdWait(unsigned long cmdWait) { _cmdWait=cmdWait; *_prgTime=1; }
 
-/** goto key in prg */
-boolean cmdGoto(char *p0) { 
-  if(_prg==NULL || p0==NULL) { return "goto prg/label NULL"; } 
-  if(isInt(p0)) { _skipCmd=toInt(p0); return false;}
 
-  char *findPtr=_prg;
+void cmdError(char *error) {  
+  logPrintln(LOG_ERROR,error);
+//  _prgptr=NULL; 
+  *_prgTime=2; // stop program
+}
+
+/* end of line (NULL = no line)*/
+char* lineEnd(char* ptr) {
+  if(ptr==NULL || *ptr=='\0') { return NULL; }   
+//  ptr++;
+  while(*ptr!=';' && *ptr!='\n' && *ptr!='\r' && *ptr!='\0') { 
+    ptr++; 
+//Serial.print(*ptr);    
+  }
+  return ptr;
+} 
+
+
+/** goto key in prg */
+boolean cmdGoto(char *findPtr,char *p0) { 
+  if(findPtr==NULL || p0==NULL) { cmdError("findPtr or goto missing"); return false; } 
+  if(isInt(p0)) { _skipCmd=toInt(p0); return true;}
+/*
   while(true) {
     char *find = strstr(findPtr, p0);
     if(find==NULL) { return "goto unkown"; }
@@ -133,9 +172,70 @@ boolean cmdGoto(char *p0) {
     findPtr=find+1;   
   }   
   return false;
+*/
+  char *find=findPtr;
+  while(find!=NULL) {    
+//Serial.print("line:");Serial.print(find);Serial.print(" startWith:"); Serial.print(p0); Serial.print(" ok:");Serial.println(strcmp(find,p0));
+    if(startWith(find,p0)) { _prgPtr=find; return true;  }    
+    find=lineEnd(find); 
+    if(find!=NULL) { find++; }
+  }  
+  sprintf(buffer,"goto '%s' missing",p0); cmdError(buffer); return false;
 }
 
-boolean cmdIf(char *a,char *match,char *b,char *gotoOnTrue) {
+/* find up start "{" of {..} in prg, start at prgPtr */
+char* subStart(char *prgPtr) { 
+  int sub=0;
+  while(prgPtr!=_prg) { 
+    if(*prgPtr=='{') { if(sub==0) { return prgPtr; }  else if(sub>0) { sub--; } }
+    else if(*prgPtr=='}') { sub++; }
+    prgPtr--;
+  }
+  return NULL;
+} 
+
+/* find down end "} of {..} in prg, start at prgPtr */
+char* subEnd(char *prgPtr) { 
+  if(prgPtr==NULL) { return NULL; }
+  int sub=0;
+  while(*prgPtr!='\0') { 
+    if(*prgPtr=='{') { sub++; }
+    else if(*prgPtr=='}') { if(sub==0) { return prgPtr; }  else if(sub>0) { sub--; } }
+    prgPtr++;
+  }
+  return NULL;
+} 
+
+/* goto/skip until */
+boolean gotoSubEnd(char *prgPtr) {
+  char *end=subEnd(prgPtr);
+  if(end==NULL) { cmdError("subEnd not found"); return false; } else { _prgPtr=end; return true;}
+}
+
+/* start sub on "ok" otherweise skip until }  */
+boolean startSub(char *param,boolean ok) {
+  char *cmdOnTrue=cmdParma(&param);
+  if(equals(cmdOnTrue,"{")) {
+    if(ok)  { return true; } // on true => execute next line 
+    else { return gotoSubEnd(_prgPtr); }
+  }else {
+    if(ok) { char* ret=cmdExec(cmdOnTrue,param); return true; } // on true => execute cmd 
+    else { return false; }
+  }
+}
+
+/* repeat last sub  }  */
+boolean repeatSub(char *param) {
+  char *start=subStart(_prgPtr);
+  if(start==NULL) { cmdError("repeatSub not found"); return false; } else { _prgPtr=start; return true;}
+}
+
+/* resolve/caclute param of if */
+boolean calcIf(char *param) {
+  char *a=cmdParma(&param);
+  char *match=cmdParma(&param);
+  char *b=cmdParma(&param);
+
   int ai=toInt(a),bi=toInt(b);
   boolean ok=false;
   if(equals(match,"==") && ai==bi) { ok=true; }
@@ -144,15 +244,32 @@ boolean cmdIf(char *a,char *match,char *b,char *gotoOnTrue) {
   else if(equals(match,">=") && ai>=bi) { ok=true; }
   else if(equals(match,"<") && ai<bi) { ok=true; }
   else if(equals(match,"<=") && ai<=bi) { ok=true; }
+  return ok;
 
-  if(is(gotoOnTrue)) {
-    if(ok) { if(isInt(gotoOnTrue)) { return true;} else { return cmdGoto(gotoOnTrue); } }
-    else { if(isInt(gotoOnTrue)) { _skipCmd=toInt(gotoOnTrue); return false; } else { return false; } }
-    
-  }else {
-    if(ok) { return true; }
-    else {_skipCmd=1; return false; }
-  }  
+}
+
+/* if RULE {} or else cmd */
+boolean cmdUntil(char *param) {
+  if(!calcIf(param)) { return repeatSub(param); }
+  else { return false; }
+}
+
+/* if RULE {} or else cmd */
+boolean cmdIf(char *param) {
+  _lastIf=calcIf(param);
+  return startSub(param,_lastIf);
+}
+
+/* elseif RULE {} or else cmd */
+boolean cmdElseIf(char *param) {  
+  if(!_lastIf) { _lastIf=calcIf(param); }
+  return startSub(param,_lastIf);
+}
+
+/* else {} or else cmd */
+boolean cmdElse(char *param) {  
+  boolean startElse=!_lastIf; if(!_lastIf) { _lastIf=true; }
+  return startSub(param,startElse);
 }
 
 char* cmdSet(char *a,char *b,char *c) {
@@ -184,6 +301,25 @@ char* attrInfo() {
 }
 void attrClear(char *prefix) { attrMap.clear(prefix); }
 
+
+
+//------------------------------------
+
+boolean pIsNumner(char *param) {
+  if(*param>='0' && *param<='9') { return true; }
+  else if(*param=='+' || *param=='-') { return true; }
+  else { return false; }
+}
+
+boolean pIsCalc(char *param) {
+   if(*param=='<' || *param=='>' ) { return true; }
+   else if(*param=='&' || *param=='|' ) { return true; }
+   else if(*param=='=') { return true; }
+   else { return false; }
+}
+
+//--------------------------------
+
 /* read next param */
 char* cmdParma(char **pp) {
     if(pp==NULL || *pp==NULL || **pp=='\0') { return EMPTY; }
@@ -191,52 +327,42 @@ char* cmdParma(char **pp) {
     
     char* p1;
     if(pp==NULL || *pp==NULL || **pp=='\0') { return EMPTY; }
-    else if(**pp=='"') { // read "param"
+    else if(**pp=='"') { // read string "param"
       (*pp)++; // skip first "
-      p1 = strtok_r(NULL, "\"",pp); 
+      p1 = strtok_r(NULL, "\"",pp);       
     }else if(**pp=='$') { // attribute
       (*pp)++; // skip first $
       p1 = strtok_r(NULL, " ",pp); 
       p1=attrGet(p1);
     }else {
-      p1 = strtok_r(NULL, " ",pp);  
+      p1 = strtok_r(NULL, " ",pp);        
+      if(!is(p1) || pIsNumner(p1) || pIsCalc(p1)) { }
+      else { p1=cmdExec(p1, *pp); }
     }
     if(p1==NULL) { return EMPTY; } 
     return p1;
 }
 
 
-/* parse and execute a cmd line */
-char* cmdLine(char* line) {
-  char *key=NULL;
-  char *ptr;
-  char *command = strtok_r(line, " ",&ptr);
-  if(command==NULL) { return EMPTY; } // no command 
-  else if(_skipCmd>0 || command[0]=='#') { _skipCmd--;  return "skip"; } // skip line or comment 
-  else if(command[0]=='$') { key=command+1; command=cmdParma(&ptr);  }
-
-  char *p0=EMPTY,*p1=EMPTY,*p2=EMPTY,*p3=EMPTY,*p4=EMPTY,*p5=EMPTY,*p6=EMPTY,*p7=EMPTY,*p8=EMPTY,*p9=EMPTY;
-  if(ptr!=NULL) { p0=cmdParma(&ptr);}
-  if(ptr!=NULL) { p1=cmdParma(&ptr);}
-  if(ptr!=NULL) { p2=cmdParma(&ptr);}
-  if(ptr!=NULL) { p3=cmdParma(&ptr);}
-  if(ptr!=NULL) { p4=cmdParma(&ptr);}
-  if(ptr!=NULL) { p5=cmdParma(&ptr);}
-  if(ptr!=NULL) { p6=cmdParma(&ptr);}
-  if(ptr!=NULL) { p7=cmdParma(&ptr);}
-  if(ptr!=NULL) { p8=cmdParma(&ptr);}
-  if(ptr!=NULL) { p9=cmdParma(&ptr);}
-
-  char *ret=cmdExec(command, p0, p1,p2,p3,p4,p5,p6,p7,p8,p9);
+/* set $key CMD */
+char* cmdAttr(char *key,char *param) {
+  char *cmd=cmdParma(&param);
+  char *ret=cmdExec(cmd, param);
   if(key!=NULL) { attrSet(key,ret);  } 
-
-  logPrintln(LOG_DEBUG,ret);  // show return
   return ret;
 }
+
+/* parse and execute a cmd line */
+char* cmdLine(char* line) {  
+  return cmdParma(&line);
+}
+
+//--------------------------------
 
 /* get next line as a copy of prg  */
 char *nextCmd() {
   if(_prgPtr==NULL) { return NULL; }
+/*  
   else if(*_prgPtr=='\0') { return NULL; } // end found
   char *line_end = strchr(_prgPtr, ';');
   if(line_end!=NULL) { 
@@ -252,6 +378,15 @@ char *nextCmd() {
     _prgPtr+=len; // set end pos
     return prgLine;
   }
+*/
+  char *line_end=lineEnd(_prgPtr);
+  if(line_end==NULL)  { return NULL; }
+  int len=line_end-_prgPtr;
+  if(len<=0) { _prgPtr+=len+1; return EMPTY; }
+  memcpy( prgLine, _prgPtr, len); prgLine[len]='\0'; 
+  _prgPtr+=len; // set next pos
+//Serial.print("line:");Serial.print(prgLine);Serial.println(" len:");  Serial.println(len);
+  return prgLine;
 }
 
 /* loop next prg line */
@@ -288,16 +423,18 @@ char* cmdPrg(char* prg) {
   if(_prg!=NULL) { delete[] _prg; _prg=NULL; _prgPtr=NULL; } // clear old prg
   if(prg==NULL) { return "prg missing"; }
   _prg=prg;
-  replace(_prg,'\r',';'); // 
-  replace(_prg,'\n',';'); // newLine => cmd End  
+//  replace(_prg,'\r',';'); // 
+//  replace(_prg,'\n',';'); // newLine => cmd End  
   _prgPtr=_prg;  // set ptr to prg start
+  *_prgTime=0; // set prgTime to run
   return prgLoop();   
 }
 
 char* cmdFile(char* p0) {
   if(_prg!=NULL) { delete[] _prg; _prg=NULL; _prgPtr=NULL; } // clear old prg
-  String name=toString(p0);  
+  if(!is(p0)) { return "end"; }
 
+  String name=toString(p0);  
   char* prg = fsRead(name);
   if(prg==NULL) { return "cmdFile missing "; }
   else { char* ret=cmdPrg(prg); return ret; }
@@ -323,7 +460,7 @@ void cmdRead() {
     else { // RETURN or maxlength 
       inData[inIndex++] = '\0';
       String ret=cmdLine(inData);
-      logPrintln(LOG_SYSTEM,ret);
+      if(logLevel!=LOG_DEBUG) { logPrintln(LOG_SYSTEM,ret); }      
       inIndex = 0;
     }
   }

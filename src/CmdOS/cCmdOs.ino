@@ -6,7 +6,7 @@
 #include <sys/time.h>     // time
 
 /* cmdOS from openON.org develop by mk@almi.de */
-const char *cmdOS="V.0.1.0";
+const char *cmdOS="V.0.2.0-snapshot";
 char *APP_NAME_PREFIX="CmdOs";
 
 String appIP="";
@@ -269,8 +269,12 @@ boolean endsWith(char *str,char *find) {
     e.g. if(startWith(str,"/"))
 */
 boolean startWith(char *str,char *find) {
-  if(str==NULL || find==NULL) { return false; }
-  return strcmp(str, find) == 0;
+  if(!is(str) || !is(find)) { return false; }
+  //return strcmp(str, find) == 0;
+  int l1=strlen(str); int l2=strlen(find);
+  if(l1<l2) { return false; }
+  for(int i=0;i<l2;i++) {  if(*str++!=*find++) { return false; } }
+  return true;
 }
 
 /** extract from src (NEW char[]) */
@@ -285,13 +289,14 @@ char* extract(char *start, char *end, char *src) {
 }
 
 /* validate is cstr equals to find  
-    e.g. if(equals(cmd,"stat")) 
-*/
+    e.g. if(equals(cmd,"stat")) */
 boolean equals(char *str,char *find) {
   if(!is(str) || !is(find)) { return false; }
-  boolean ok=(strlen(str)==strlen(find) && strcmp(str, find)==0); 
-//Serial.print("equals ");Serial.print(str);Serial.print("=");Serial.print(find);Serial.print(" ok:");Serial.println(ok);
-  return ok;  
+  int l1=strlen(str); int l2=strlen(find);
+  if(l1!=l2) { return false; }
+//  return strcmp(str, find)==0;
+  for(int i=0;i<l2;i++) {  if(*str++!=*find++) { return false; } }
+  return true;
 }
 
 /* size/len of text  
@@ -309,6 +314,18 @@ char* append(char *text1,char *text2) {
   if(is(text2)) { strcat(paramBuffer, text2); }
   return paramBuffer;
 }
+
+/** insert at pos into buffer */
+void insert(char* buffer,int pos,char* insertText) {
+    size_t insertLen = strlen(insertText);
+    size_t len = strlen(buffer);
+    size_t newLen = insertLen + len;      
+    // Shift existing text to the right
+    memmove(buffer + pos + insertLen, buffer + pos , len - pos + 1);  // +1 for null terminator
+    // Copy the prefix at the beginning
+    memcpy(buffer+pos, insertText, insertLen);
+} 
+
  
 /*  validate if chars not NULL  
     e.g. if(is(text))
@@ -324,6 +341,7 @@ boolean is(String str,int min,int max) { if(str==NULL || str==EMPTYSTRING ) { re
 
 /* convert to correct char */
 char* to(long d) { sprintf(buffer,"%d",d); return buffer; }
+char* to(boolean d) { sprintf(buffer,"%d",d); return buffer; }
 char* to(char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { return p; } else { return EMPTY; } }
 const char* to(const char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { return p; } else { return EMPTY; } }
 
@@ -713,19 +731,37 @@ char* setLogLevel(int level) {
   }
 
   /* list files in SPIFFS of dir (null=/) */
-  char* fsDir() {
-    if(!isAccess(ACCESS_READ))  { return "NO ACCESS rest"; }
+  char* fsDir(String find) {
+    if(!isAccess(ACCESS_READ))  { return "NO ACCESS fsDir"; }
     sprintf(buffer,"Files:\n");
     File root = FILESYSTEM.open(rootDir);
     File foundfile = root.openNextFile();
     while (foundfile) {
-      sprintf(buffer+strlen(buffer),"%s (%d)\n",foundfile.name(),foundfile.size());
-      foundfile = root.openNextFile();
+      String file=foundfile.name();
+      if(!is(find) || find.indexOf(file)!=-1) { 
+        sprintf(buffer+strlen(buffer),"%s (%d)\n",foundfile.name(),foundfile.size());
+        foundfile = root.openNextFile();
+      }
     }
     root.close();
     foundfile.close();
     return buffer; 
   }
+
+  /* list number of files in SPIFFS of dir (null=/) */
+  int fsDirSize(String find) {
+    int count=0;
+    File root = FILESYSTEM.open(rootDir);
+    File foundfile = root.openNextFile();
+    while (foundfile) {
+      String file=foundfile.name();
+      if(!is(find) || find.indexOf(file)!=-1) { count++; }
+    }
+    root.close();
+    foundfile.close();
+    return count; 
+  }
+
 
   /* format SPIFFS */
   void fsFormat() {
