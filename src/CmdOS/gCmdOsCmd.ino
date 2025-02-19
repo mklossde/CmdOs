@@ -28,10 +28,15 @@ char* appInfo() {
 
 /* convert param to line in buffer */
 char* paramToLine(char *param) {
-  *buffer='\0';
-  char* p=cmdParam(&param);
-  if(is(p)) { append(buffer,p); p=cmdParam(&param); } 
-  while(is(p)) { append(buffer," "); append(buffer,p);}
+//  *buffer='\0';
+//  char* p=cmdParam(&param);
+//  if(is(p)) { append(buffer,p); p=cmdParam(&param); } 
+//  while(is(p)) { append(buffer," "); append(buffer,p); p=cmdParam(&param); }
+
+  sprintf(buffer,"%s %s %s %s %s %s %s %s",
+    cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param)); 
+
+  return buffer;
 }
 
 char* cmdInfo() {
@@ -119,7 +124,8 @@ char* cmdExec(char *cmd, char *param) {
   else if(equals(cmd, "stop")) { ret=prgStop(); } // stop/halt prg
   else if(equals(cmd, "continue")) { ret=prgContinue(); } // continue prg
   else if(equals(cmd, "next")) { ret=prgNext(cmdParam(&param)); } // next prg step
-  else if(equals(cmd, "error")) { cmdError(cmdParam(&param));  }// end prg with error
+//  else if(equals(cmd, "error")) { cmdError(cmdParam(&param));  }// end prg with error
+  else if(equals(cmd, "error")) { cmdError(paramToLine(param));  }// end prg with error
 
   else if(equals(cmd, "fsDir") && isAccess(ACCESS_READ)) { ret=fsDir(toString(cmdParam(&param))); }
   else if(equals(cmd, "fsDirSize") && isAccess(ACCESS_READ)) { int count=fsDirSize(toString(cmdParam(&param))); sprintf(buffer,"%d",count); ret=buffer; }
@@ -274,7 +280,7 @@ boolean calcIf(char **param) {
   else if(equals(match,">=")) { ok=(ai>=bi); }
   else if(equals(match,"<")) { ok=(ai<bi); }
   else if(equals(match,"<=")) { ok=(ai<=bi); }
-  else { sprintf(buffer,"ERROR match '%s' unkown",match); cmdError(buffer); return false; }
+  else { sprintf(buffer,"ERROR match unkown"); cmdError(buffer); return false; }
 
   sprintf(buffer,"calc a:%s match:%s b:%s => %d (ai:%d bi:%d)",a,match,b,ok,ai,bi); logPrintln(LOG_DEBUG,buffer);
   return ok;
