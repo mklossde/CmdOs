@@ -20,7 +20,19 @@ char* appInfo() {
       prgTitle,prgVersion,cmdOS,bootType,_isLogin,eeBoot.accessLevel); return buffer;
 }
 
+// $a =
+// attr $a =
+// $a CMD
+
 //------------------------------------------------------------------------------------------------
+
+/* convert param to line in buffer */
+char* paramToLine(char *param) {
+  *buffer='\0';
+  char* p=cmdParam(&param);
+  if(is(p)) { append(buffer,p); p=cmdParam(&param); } 
+  while(is(p)) { append(buffer," "); append(buffer,p);}
+}
 
 char* cmdInfo() {
   return "?|esp|stat save|load|rset|restart|set[ NAME PAS]|wifi[ SSID PAS]|scan|mqtt[ MQTTURL]|ping IP|DNS IP|sleep[ MODE TIME]|setup|time[ MS]|mode[ MODE]";
@@ -37,9 +49,14 @@ char* cmdExec(char *cmd, char *param) {
   if(!is(cmd)) { return EMPTY; } 
   sprintf(buffer,"->%s %s",cmd,to(param)); logPrintln(LOG_DEBUG,buffer); 
 
+  if(equals(cmd, "}")) { cmd=nextParam(&param); } 
+
   char *ret= EMPTY;
-  if(_skipCmd>0 || cmd[0]=='#') { _skipCmd--;  logPrintln(LOG_DEBUG,"skip");  } // skip line or comment   
-  else if(cmd[0]=='$') { ret=cmdAttr(cmd,param);  }
+  if(_skipCmd>0 || cmd[0]=='#') { _skipCmd--;  sprintf(buffer,"skip %s",cmd); logPrintln(LOG_DEBUG,buffer);  ret=cmd; } // skip line or comment   
+  else if(cmd[0]=='$') { 
+    if(!equals(nextParam(&param), "=")) { cmdError("ERROR missing = after attr"); }
+    else { ret=cmdSet(cmd,param);  }
+  }
 
   else if(equals(cmd, "?")) { ret=cmdInfo(); }
   else if(equals(cmd, "esp")) { ret=espInfo();  }// show esp status
@@ -51,30 +68,33 @@ char* cmdExec(char *cmd, char *param) {
   else if(equals(cmd, "restart")) { espRestart("cmd restart");  }// restart
   else if(equals(cmd, "sleep")) {  sleep(cmdParam(&param),cmdParam(&param));  }      // sleep TIMEMS MODE (e.g. sleep 5000 0) (TIMEMS=0=>EVER) (MODE=0=>WIFI_OFF)
 
-  else if(equals(cmd, "attr")) { attrSet(nextParam(&param),cmdParam(&param)); ret=attrInfo(); }
+  else if(equals(cmd, "attr")) { ret=cmdSet(nextParam(&param),param); }
   else if(equals(cmd, "attrDel")) { attrDel(cmdParam(&param));  }
   else if(equals(cmd, "attrClear")) { attrClear(cmdParam(&param));  }
+  else if(equals(cmd, "attrs")) { ret=attrInfo(); }
 
   else if(equals(cmd, "wait")) { cmdWait(toULong(cmdParam(&param))); }// wait for next exec
   else if(equals(cmd, "exec")) { cmdExec(cmdParam(&param),param); }// exec 
   else if(equals(cmd, "goto")) { ret=to(cmdGoto(_prg,cmdParam(&param))); }// goto prg label or skip n steps
-  else if(equals(cmd, "=")) { ret=cmdSet(cmdParam(&param),cmdParam(&param),cmdParam(&param)); }// return p0p1p2
+//  else if(equals(cmd, "=")) { ret=cmdSet(cmdParam(&param),cmdParam(&param),cmdParam(&param)); }// return p0p1p2
   else if(equals(cmd, "if")) { ret=to(cmdIf(param));  }// if p0 <=> p2 => { }
-  else if(equals(cmd, "else")) { ret=to(cmdElse(param)); }// else => {}
   else if(equals(cmd, "elseif")) { ret=to(cmdElseIf(param)); }// else if p0 <=> p2 => { }
+  else if(equals(cmd, "else")) { ret=to(cmdElse(param)); }// else => {}
   else if(equals(cmd, "until")) { ret=to(cmdUntil(param)); }// {} until p0 <=> p2 
 
   else if(equals(cmd, "random")) { int r=random(toInt(cmdParam(&param)),toInt(cmdParam(&param)));  sprintf(buffer,"%d",r); ret=buffer;  } // random min-max
   else if(equals(cmd,"extract")) { ret=extract(cmdParam(&param),cmdParam(&param),cmdParam(&param)); } // extract start end str (e.g  "free:"," " from "value free:1000 colr:1" => 1000)
   else if(equals(cmd, "reset")) { ret=bootReset(cmdParam(&param)); }// reset eeprom and restart    
 
-  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { ret=setupEsp(cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param)); }// setup wifi-ssid wifi-pas espPas => save&restart
   else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { ret=setupDev(cmdParam(&param)); } // enable/disable setupDevices
-  
-  else if(equals(cmd, "log")) { sprintf(buffer,"%s %s %s %s %s %s %s %s",
-    cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param)); 
-    logPrintln(LOG_INFO,buffer); ret=buffer;}// log
+  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { ret=setupEsp(cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param)); }// setup wifi-ssid wifi-pas espPas => save&restart  
+
   else if(equals(cmd, "logLevel")) { ret=setLogLevel(toInt(cmdParam(&param))); }  // set mode (e.g. "mode NR")
+  else if(equals(cmd, "log")) { 
+//    sprintf(buffer,"%s %s %s %s %s %s %s %s",
+//    cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param)); 
+//    logPrintln(LOG_INFO,buffer); ret=buffer;}// log  
+    ret=paramToLine(param); logPrintln(LOG_INFO,ret); } 
 
   else if(equals(cmd, "save")) { bootSave();  }// write data to eeprom
   else if(equals(cmd, "load")) { bootRead(); }// load data from eprom
@@ -87,13 +107,13 @@ char* cmdExec(char *cmd, char *param) {
   
   else if(equals(cmd, "ping")) {  ret=cmdPing(cmdParam(&param)); }         // wifi ping  (e.g. "ping web.de")
   else if(equals(cmd, "dns")) {  ret=netDns(cmdParam(&param)); }         // wifi dns resolve (e.g. "dns web.de")
-
-  else if(equals(cmd, "mqtt")) { ret=mqttSet(cmdParam(&param));  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833")  
+   
   else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(cmdParam(&param));   } // enable/disbale mqttLog
   else if(equals(cmd,"mqttSend") && isAccess(ACCESS_CHANGE)) { publishTopic(cmdParam(&param),cmdParam(&param));  } // mqtt send topic MESSAGE
   else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(cmdParam(&param)));  }
   else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_READ)) { mqttAttr(cmdParam(&param),toBoolean(cmdParam(&param)));  }
-  
+  else if(equals(cmd, "mqtt")) { ret=mqttSet(cmdParam(&param));  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833") 
+
   else if(equals(cmd, "run")) { ret=cmdFile(cmdParam(&param)); } // run prg from file 
   else if(equals(cmd, "end")) { ret=cmdFile(NULL); }// stop prg
   else if(equals(cmd, "stop")) { ret=prgStop(); } // stop/halt prg
@@ -102,6 +122,8 @@ char* cmdExec(char *cmd, char *param) {
   else if(equals(cmd, "error")) { cmdError(cmdParam(&param));  }// end prg with error
 
   else if(equals(cmd, "fsDir") && isAccess(ACCESS_READ)) { ret=fsDir(toString(cmdParam(&param))); }
+  else if(equals(cmd, "fsDirSize") && isAccess(ACCESS_READ)) { int count=fsDirSize(toString(cmdParam(&param))); sprintf(buffer,"%d",count); ret=buffer; }
+  else if(equals(cmd, "fsFile") && isAccess(ACCESS_READ)) { ret=fsFile(toString(cmdParam(&param)),toInt(cmdParam(&param)),toInt(cmdParam(&param))); }
   else if(equals(cmd, "fsCat") && isAccess(ACCESS_READ)) { fsCat(toString(cmdParam(&param)));  }
   else if(equals(cmd, "fsWrite") && isAccess(ACCESS_CHANGE) ) { boolean ok=fsWrite(toString(cmdParam(&param)),cmdParam(&param)); }
   else if(equals(cmd, "fsDel") && isAccess(ACCESS_CHANGE)) { fsDelete(toString(cmdParam(&param))); }
@@ -163,7 +185,8 @@ char* lineEnd(char* ptr) {
 
 /** goto key in prg */
 boolean cmdGoto(char *findPtr,char *p0) { 
-  if(findPtr==NULL || p0==NULL) { cmdError("findPtr or goto missing"); return false; } 
+  if(findPtr==NULL) { cmdError("ERROR findPtr missing"); return false; } 
+  else if(!is(p0)) { sprintf(buffer,"ERROR goto dest missing"); cmdError(buffer); return false; } 
   if(isInt(p0)) { _skipCmd=toInt(p0); return true;}
 /*
   while(true) {
@@ -174,6 +197,8 @@ boolean cmdGoto(char *findPtr,char *p0) {
   }   
   return false;
 */
+//Serial.print(" findgoto:");Serial.println(p0);
+
   char *find=findPtr;
   while(find!=NULL) {    
 //Serial.print("line:");Serial.print(find);Serial.print(" startWith:"); Serial.print(p0); Serial.print(" ok:");Serial.println(strcmp(find,p0));
@@ -181,14 +206,14 @@ boolean cmdGoto(char *findPtr,char *p0) {
     find=lineEnd(find); 
     if(find!=NULL) { find++; }
   }  
-  sprintf(buffer,"goto '%s' missing",p0); cmdError(buffer); return false;
+  sprintf(buffer,"ERROR goto '%s' missing",p0); cmdError(buffer); return false;
 }
 
 /* find up start "{" of {..} in prg, start at prgPtr */
 char* subStart(char *prgPtr) { 
   int sub=0;
   while(prgPtr!=_prg) { 
-    if(*prgPtr=='{') { if(sub==0) { return prgPtr; }  else if(sub>0) { sub--; } }
+    if(*prgPtr=='{') { sub--; if(sub==0) { return prgPtr; }  }
     else if(*prgPtr=='}') { sub++; }
     prgPtr--;
   }
@@ -201,7 +226,7 @@ char* subEnd(char *prgPtr) {
   int sub=0;
   while(*prgPtr!='\0') { 
     if(*prgPtr=='{') { sub++; }
-    else if(*prgPtr=='}') { if(sub==0) { return prgPtr; }  else if(sub>0) { sub--; } }
+    else if(*prgPtr=='}') { if(sub==0) { return ++prgPtr; }  else if(sub>0) { sub--; } }
     prgPtr++;
   }
   return NULL;
@@ -210,16 +235,20 @@ char* subEnd(char *prgPtr) {
 /* goto/skip until */
 boolean gotoSubEnd(char *prgPtr) {
   char *end=subEnd(prgPtr);
-  if(end==NULL) { cmdError("subEnd not found"); return false; } else { _prgPtr=end; return true;}
+  if(end==NULL) { cmdError("ERROR subEnd not found"); return false; } else { _prgPtr=end; return true;}
 }
 
 /* start sub on "ok" otherweise skip until }  */
-boolean startSub(char *param,boolean ok) {
+boolean startSub(char *param,boolean ok) {  
   char *cmdOnTrue=nextParam(&param);
+//sprintf(buffer,"startSub c:%s p:%s ok:%d",to(cmdOnTrue),to(param),ok); logPrintln(LOG_SYSTEM,buffer);
+
   if(equals(cmdOnTrue,"{")) {
+//sprintf(buffer,"  startSub sub %d",ok); logPrintln(LOG_SYSTEM,buffer);        
     if(ok)  { return true; } // on true => execute next line 
     else { return gotoSubEnd(_prgPtr); }
   }else {
+//sprintf(buffer,"  startSub cmd c:%s p:%s",to(cmdOnTrue),to(param)); logPrintln(LOG_SYSTEM,buffer);    
     if(ok) { char* ret=cmdExec(cmdOnTrue,param); return true; } // on true => execute cmd 
     else { return false; }
   }
@@ -228,67 +257,102 @@ boolean startSub(char *param,boolean ok) {
 /* repeat last sub  }  */
 boolean repeatSub(char *param) {
   char *start=subStart(_prgPtr);
-  if(start==NULL) { cmdError("repeatSub not found"); return false; } else { _prgPtr=start; return true;}
+  if(start==NULL) { cmdError("ERROR repeatSub not found"); return false; } else { _prgPtr=start; return true;}
 }
 
 /* resolve/caclute param of if */
-boolean calcIf(char *param) {
-  char *a=cmdParam(&param);
-  char *match=cmdParam(&param);
-  char *b=cmdParam(&param);
-
+boolean calcIf(char **param) {
+  char *a=cmdParam(param);
+  char *match=cmdParam(param);
+  char *b=cmdParam(param);  
   int ai=toInt(a),bi=toInt(b);
   boolean ok=false;
-  if(equals(match,"==") && ai==bi) { ok=true; }
-  else if(equals(match,"!=") && ai!=bi) { ok=true; }
-  else if(equals(match,">") && ai>bi) { ok=true; }
-  else if(equals(match,">=") && ai>=bi) { ok=true; }
-  else if(equals(match,"<") && ai<bi) { ok=true; }
-  else if(equals(match,"<=") && ai<=bi) { ok=true; }
+
+  if(equals(match,"==")) { ok=(ai==bi); }
+  else if(equals(match,"!=")) { ok=(ai!=bi); }
+  else if(equals(match,">")) { ok=(ai>bi); }
+  else if(equals(match,">=")) { ok=(ai>=bi); }
+  else if(equals(match,"<")) { ok=(ai<bi); }
+  else if(equals(match,"<=")) { ok=(ai<=bi); }
+  else { sprintf(buffer,"ERROR match '%s' unkown",match); cmdError(buffer); return false; }
+
+  sprintf(buffer,"calc a:%s match:%s b:%s => %d (ai:%d bi:%d)",a,match,b,ok,ai,bi); logPrintln(LOG_DEBUG,buffer);
   return ok;
 
 }
 
 /* if RULE {} or else cmd */
 boolean cmdUntil(char *param) {
-  if(!calcIf(param)) { return repeatSub(param); }
+  boolean ok=calcIf(&param);
+//Serial.print("cmdUntil "); Serial.println(ok); 
+  if(!ok) { return repeatSub(param); }
   else { return false; }
 }
 
 /* if RULE {} or else cmd */
-boolean cmdIf(char *param) {
-  _lastIf=calcIf(param);
+boolean cmdIf(char *param) {  
+  _lastIf=calcIf(&param);
+//Serial.print("if ");Serial.println(_lastIf);      
   return startSub(param,_lastIf);
 }
 
 /* elseif RULE {} or else cmd */
 boolean cmdElseIf(char *param) {  
-  if(!_lastIf) { _lastIf=calcIf(param); }
+//Serial.print("elseif ");Serial.println(_lastIf);    
+  if(!_lastIf) { 
+//Serial.print("  elseif:");Serial.println(param);    
+    _lastIf=calcIf(&param); 
+//Serial.print("  _lastIf:");Serial.println(_lastIf);        
+}
   return startSub(param,_lastIf);
 }
 
 /* else {} or else cmd */
 boolean cmdElse(char *param) {  
   boolean startElse=!_lastIf; if(!_lastIf) { _lastIf=true; }
+//Serial.print("else ");Serial.println(startElse);      
   return startSub(param,startElse);
-}
-
-char* cmdSet(char *a,char *b,char *c) {
-  if(equals(b,"+")) { int s=toInt(a)+toInt(c); sprintf(buffer,"%d",s); }
-  else if(equals(b,"-")) { int s=toInt(a)-toInt(c); sprintf(buffer,"%d",s); }
-  else if(equals(b,"*")) { int s=toInt(a)*toInt(c); sprintf(buffer,"%d",s); }
-  else if(equals(b,"/")) { int s=toInt(a)/toInt(c); sprintf(buffer,"%d",s); }
-  else {  sprintf(buffer,"%s",a);  }
-  return buffer;
 }
 
 //------------------------------------
 
-boolean attrHave(char *key) { return attrMap.find(key)!=-1; }
-char* attrGet(char *key) {  return (char*)attrMap.get(key); }
-void attrSet(char *key,String value) {    if(is(key)) { char *v=(char*)value.c_str(); attrMap.replace(key,v,strlen(v));} }
-void attrSet(char *key,char *value) {  if(is(key)) {attrMap.replace(key,value,strlen(value)); } }
-void attrDel(char *key) { attrMap.del(key); }
+char* attrCalc(char *a,char *b,char *c) {
+  if(!is(b)) { return a; }
+  else if(equals(b,"+")) { int s=toInt(a)+toInt(c); sprintf(buffer,"%d",s); }
+  else if(equals(b,"-")) { int s=toInt(a)-toInt(c); sprintf(buffer,"%d",s); }
+  else if(equals(b,"*")) { int s=toInt(a)*toInt(c); sprintf(buffer,"%d",s); }
+  else if(equals(b,"/")) { int s=toInt(a)/toInt(c); sprintf(buffer,"%d",s); }
+  else {  sprintf(buffer,"ERROR unkown '%s' calc",b); cmdError(buffer); return EMPTY; }
+  return buffer;
+}
+
+/* set-attr KEY VALUE (e.g. $a = ..  or attr $a ... )  
+    return VALUE or attrInfo (if KEY missing) 
+*/
+char* cmdSet(char *key,char *param) {
+  char *val=cmdParam(&param);
+  char *ret=attrCalc(val,cmdParam(&param),cmdParam(&param)); // return p0p1p2
+
+  if(key!=NULL) { 
+    attrSet(key,ret);  
+  }   
+  return ret;
+}
+
+/* remove '$' from key */
+char* _toAttr(char *key) {
+  if(!is(key)) { return EMPTY; } else if(*key=='$') { key++; }
+  return key;
+}
+
+boolean attrHave(char *key) { return attrMap.find(_toAttr(key))!=-1; }
+char* attrGet(char *key) {  return (char*)attrMap.get(_toAttr(key)); }
+void attrSet(char *key,String value) { 
+  char *v=(char*)value.c_str(); 
+  attrMap.replace(_toAttr(key),v,strlen(v)); 
+} 
+void attrSet(char *key,char *value) { attrMap.replace(_toAttr(key),value,strlen(value));  }
+void attrDel(char *key) { attrMap.del(_toAttr(key)); }
 char* attrInfo() {
    sprintf(buffer,"");
   for(int i=0;i<attrMap.size();i++) {  
@@ -301,8 +365,6 @@ char* attrInfo() {
   return buffer;
 }
 void attrClear(char *prefix) { attrMap.clear(prefix); }
-
-
 
 //------------------------------------
 
@@ -350,14 +412,6 @@ char* nextParam(char **pp) {
     if(pp==NULL || *pp==NULL || **pp=='\0') { return EMPTY; }
     char* cmd = strtok_r(NULL, " ",pp); 
     if(cmd==NULL) { return EMPTY; } else { return cmd; }
-}
-
-/* set $key CMD */
-char* cmdAttr(char *key,char *param) {
-  char *cmd=nextParam(&param);
-  char *ret=cmdExec(cmd, param);
-  if(key!=NULL) { attrSet(key,ret);  } 
-  return ret;
 }
 
 /* parse and execute a cmd line */

@@ -116,6 +116,7 @@ public:
   // map
   /* set by copy key and value and replace value on change */
   void replace(char *key,char *obj,int len) {
+    if(!is(key)) { return ; } 
     int index=find(key);
     if(index==-1) {
       if(_index>=_max) { grow(1); }       
@@ -152,16 +153,21 @@ public:
   char* key(int index) { if(index>=0 && index<_index) { return _key[index]; } else { return NULL; } }  
   /* get value with key e.g. char *value=(char*)list.get(key); */
   void* get(char *key) {  
+    if(!is(key)) { return NULL; }
     for(int i=0;i<_index;i++) {  if(equals(_key[i],key)) { return _array[i]; } } 
     return NULL;
   } 
   /* del key=value e.g. char* old=list.del(key); */
-  void del(char *key) { 
-    int index=find(key); if(index==-1) { return ; }
+  boolean del(char *key) { 
+    if(!is(key)) { return false; }
+    int index=find(key); if(index==-1) { return false; }
     del(index);        
+    return true;
   }  
   /* find index of key e.g. int index=list.find(key); */
-  int find(char *key) { for(int i=0;i<_index;i++) {  if(equals(_key[i],key)) { return i; } } return -1; }
+  int find(char *key) { 
+    if(!is(key)) { return -1; }
+    for(int i=0;i<_index;i++) {  if(equals(_key[i],key)) { return i; } } return -1; }
 
   // list ------------------------------------------------
   /* add object to list e.g. list.add(obj); */
@@ -291,11 +297,18 @@ char* extract(char *start, char *end, char *src) {
 /* validate is cstr equals to find  
     e.g. if(equals(cmd,"stat")) */
 boolean equals(char *str,char *find) {
+//sprintf(buffer,"equals '%s' '%s' ",to(str),to(find)); logPrintln(LOG_SYSTEM,buffer);
   if(!is(str) || !is(find)) { return false; }
   int l1=strlen(str); int l2=strlen(find);
+//sprintf(buffer,"equals len '%d' '%d' ",l1,l2); logPrintln(LOG_SYSTEM,buffer);  
   if(l1!=l2) { return false; }
 //  return strcmp(str, find)==0;
-  for(int i=0;i<l2;i++) {  if(*str++!=*find++) { return false; } }
+  for(int i=0;i<l2;i++) {  
+//sprintf(buffer,"equals is %d '%s' '%s' => %d",i,str,find,(*str==*find)); logPrintln(LOG_SYSTEM,buffer);      
+    if(*str!=*find) { return false; } 
+    str++; find++;
+  }
+//sprintf(buffer,"equals found '%s' '%s' ",str,find); logPrintln(LOG_SYSTEM,buffer);   
   return true;
 }
 
@@ -738,10 +751,10 @@ char* setLogLevel(int level) {
     File foundfile = root.openNextFile();
     while (foundfile) {
       String file=foundfile.name();
-      if(!is(find) || find.indexOf(file)!=-1) { 
-        sprintf(buffer+strlen(buffer),"%s (%d)\n",foundfile.name(),foundfile.size());
-        foundfile = root.openNextFile();
+      if(!is(find) || file.indexOf(find)!=-1) { 
+        sprintf(buffer+strlen(buffer),"%s (%d)\n",file,foundfile.size());        
       }
+      foundfile = root.openNextFile();
     }
     root.close();
     foundfile.close();
@@ -755,13 +768,36 @@ char* setLogLevel(int level) {
     File foundfile = root.openNextFile();
     while (foundfile) {
       String file=foundfile.name();
-      if(!is(find) || find.indexOf(file)!=-1) { count++; }
+      if(!is(find) || file.indexOf(find)!=-1) { count++; }
+      foundfile = root.openNextFile();
     }
     root.close();
     foundfile.close();
     return count; 
   }
 
+  /* get file-name match filter, in dir at index (e.g. .gif,0 => first gif-file) 
+      type<=0 => name of file
+      type=1 => size of file
+  */
+  char* fsFile(String find,int count,int type) {
+    File root = FILESYSTEM.open(rootDir);
+    File foundfile = root.openNextFile();
+    while (foundfile) {
+      String file=foundfile.name();
+      if(!is(find) || file.indexOf(find)!=-1) { 
+        if(count--<=0) { 
+          if(type<=0) { sprintf(buffer,"%s",(char*)file.c_str()); return buffer;  }
+          else if(type==1) { sprintf(buffer,"%d",foundfile.size()); return buffer;  }
+          else { return "unkown type"; }
+        }
+      }
+      foundfile = root.openNextFile();
+    }
+    root.close();
+    foundfile.close();
+    return EMPTY; 
+  }
 
   /* format SPIFFS */
   void fsFormat() {

@@ -27,12 +27,26 @@ if $a == 1 {
 if $a == 1 {
 	error "if-wrong"
 }elseif $a == 2 {
-	error "elseif-wrong"
+	error "elseif-wrong" 
 } else {
 	$a = $a + 1
 }
 
-if $a != 4 { error "else-wrong" }
+if $a == 4 { 
+  if $a == 5 error "inner if wrong"
+  if $a == 5 {
+    error "inner if wrong"
+  }elseif $a == 5 {
+    error "inner if2 wrong"
+  } elseif $a == 4 {
+	if $a == 4 {}	  
+	else {
+	  error "inner2 else wrong"
+	}
+  } else {
+     error "inner else wrong"
+  }
+}
 
 # until ##############################################
 

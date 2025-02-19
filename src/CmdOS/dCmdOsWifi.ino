@@ -242,7 +242,12 @@ bool isAccess(int requireLevel) {
   if(_isLogin) { return true; } // is login 
   else if(!is(eeBoot.espPas)) { return true; } // no password given
   else if(requireLevel>=eeBoot.accessLevel) { return true; } // access free
-  else { sprintf(buffer,"ACCESS DENIED %d<%d %d",requireLevel,eeBoot.accessLevel,_isLogin); logPrintln(LOG_ERROR,buffer); return false; }
+  else { 
+    sprintf(buffer,"ACCESS DENIED %d<%d %d",requireLevel,eeBoot.accessLevel,_isLogin); 
+//    logPrintln(LOG_ERROR,buffer); 
+    cmdError(buffer);     
+    return false;     
+    }
 }
 
 void setAccess(boolean login) { _isLogin=login; }
