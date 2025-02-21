@@ -468,12 +468,17 @@ char* cmdParam(char **pp) {
     char* p1;    
     if(**pp=='"') { // read string "param"
       (*pp)++; // skip first "
-      p1 = strtok_r(NULL, "\"",pp);       
+      p1 = strtok_r(NULL, "\"",pp);  
+      if(p1==NULL) { return EMPTY; }   
+      return p1;   
+
     }else if(**pp=='$') { // attribute
       (*pp)++; // skip first $
       p1 = strtok_r(NULL, " ",pp); 
       p1=attrGet(p1);
-//    }else if(pIsCalc(*pp)) { // read calc
+      if(p1==NULL) { return EMPTY; }   
+      return p1;
+
     }else {
       p1 = strtok_r(NULL, " ",pp);        
       if(!is(p1) || pIsNumber(p1) || pIsCalc(p1)) { }
@@ -490,7 +495,7 @@ char* cmdParam(char **pp) {
 
 char* nextParam(char **pp) {
     if(pp==NULL || *pp==NULL || **pp=='\0') { return EMPTY; }
-    while(**pp==' ' || **pp=='\t') { (*pp)++; } // skip spaces and tabs
+    while(**pp==' ' || **pp=='\t' || **pp=='}') { (*pp)++; } // skip spaces and tabs
     if(pp==NULL || *pp==NULL || **pp=='\0') { return EMPTY; }
     char* cmd = strtok_r(NULL, " ",pp); 
     if(cmd==NULL) { return EMPTY; } else { return cmd; }

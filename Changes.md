@@ -13,6 +13,7 @@ CmdOS V.0.2.0 - 17.02.2025
 	- "fsDir filter" - list dir with name contain filter (e.g .gif)
 	- "fsDirSize filter" - number of files in dir contains filter (e.g. .gif)
 	- "fsDirName filter index type" - get file match filter, in dir at index (e.g. .gif,0 => first gif-file) (type<=0 =>name,type=1=>size)
+	- add paramCalc to all parameter (e.g log 1 + 1 )
 	
 TODO:
 	- if inside if
