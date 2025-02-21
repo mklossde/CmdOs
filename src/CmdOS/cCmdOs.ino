@@ -317,17 +317,6 @@ boolean equals(char *str,char *find) {
 */
 int size(char *text) { if(text==NULL) { return -1; } else { return strlen(text); }}
 
-/* append text1 and text2 => text1text2 (by use paramBuffer) 
-    e.g. char* param=append("/",file)
-*/
-char* append(char *text1,char *text2) {  
-  if(size(text1)+size(text2) >= paramBufferMax) { return NULL; }
-  paramBuffer[0]= '\0';  
-  if(is(text1)) { strcpy(paramBuffer, text1);  }
-  if(is(text2)) { strcat(paramBuffer, text2); }
-  return paramBuffer;
-}
-
 /** insert at pos into buffer */
 void insert(char* buffer,int pos,char* insertText) {
     size_t insertLen = strlen(insertText);
@@ -385,6 +374,19 @@ boolean isInt(char *p) {
   else if (*x == '+' || *x == '-')  { x++; } // Handle optional sign
   while (*x) { if (!isdigit(*x)) { return false; } else { x++;} }// Non-digit character found
   return true;  // All characters are digits
+}
+
+//-----------------------------------------------------------------------------
+
+/* append text1 and text2 => text1text2 (by use paramBuffer) 
+    e.g. char* param=paramAppend("/",file)
+*/
+char* paramAppend(char *text1,char *text2) {  
+  if(size(text1)+size(text2) >= paramBufferMax) { return NULL; }
+  paramBuffer[0]= '\0';  
+  if(is(text1)) { strcpy(paramBuffer, text1);  }
+  if(is(text2)) { strcat(paramBuffer, text2); }
+  return paramBuffer;
 }
 
 //-----------------------------------------------------------------------------

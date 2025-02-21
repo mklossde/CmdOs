@@ -435,17 +435,17 @@ int xCalc(int ai,char *calc,char **param) {
   else if(equals(calc,"||")) { ret=ai || bi; }
   else if(equals(calc,"&&")) { ret=ai && bi; }
 
+  else if(equals(calc,">>")) { ret=ai >> bi; }
+  else if(equals(calc,"<<")) { ret=ai << bi; }
+
   else { cmdError("ERROR unkown calc"); ret=0; }
 //  sprintf(buffer,"calc a:%s calc:%s b:%s => %d",ai,calc,bi,ret); logPrintln(LOG_DEBUG,buffer);  
   return ret;
 }
 
-int calcParam(char **param) {
-//Serial.print(" calcParam:");Serial.println(*param);  
-  int value=0;
-  int a=toInt(cmdParam(param));
-//Serial.print("a:");Serial.println(a);
-
+int calcParam(char **param) { return calcParam(cmdParam(param),param); }
+int calcParam(char *val,char **param) {
+  int a=toInt(val);
   cmdParamSkip(param); // skip spaces
   while(pIsCalc(*param))  {    
     char *calc=cmdParam(param);       
@@ -480,9 +480,11 @@ char* cmdParam(char **pp) {
       else { p1=cmdExec(p1, pp); }
     }
     if(p1==NULL) { return EMPTY; } 
-//    else if(pIsCalc(*param)) { 
-//      int ret=calcParam(p1,pp);
-//    }
+    else if(pIsCalc(*pp)) { // next param calc 
+      int ret=calcParam(p1,pp);
+      sprintf(paramBuffer,"%d",ret);
+      p1=paramBuffer;
+    }
     return p1;
 }
 
