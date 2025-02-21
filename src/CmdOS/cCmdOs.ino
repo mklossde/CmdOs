@@ -367,6 +367,7 @@ char* to(const char *a, const char *b,const char *c,const char *d,const char *e)
 /* convert cahr* to string */
 String toString(const char *text) {  if(!is(text)) { return EMPTYSTRING; } return String(text); }
 
+boolean toBoolean(int i) { return i>0; }
 /* convert char* to boolean */
 boolean toBoolean(char *p) { return p!=NULL && (strcmp(p, "on")==0 || strcmp(p, "true")==0 || strcmp(p, "1")==0); }
 /* convert char* to int */

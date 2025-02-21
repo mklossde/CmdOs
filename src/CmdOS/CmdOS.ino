@@ -48,7 +48,7 @@ AsyncWebServer server(_webPort);
 //--------------------------------------------------------------
 
 
-char* appCmd(char *cmd, char *param) {
+char* appCmd(char *cmd, char **param) {
   return cmd; // unkown cmd => use cmd as string
 }
 
