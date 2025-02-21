@@ -368,13 +368,11 @@ char* attrCalc(char *a,char *b,char *c) {
     return VALUE or attrInfo (if KEY missing) 
 */
 char* cmdSet(char *key,char **param) {
-  int a=calcParam(param); // return p0p1p2
-  sprintf(buffer,"%d",a);
-
-  if(key!=NULL) { 
-    attrSet(key,buffer);  
-  }   
-  return buffer;
+//  int a=calcParam(param); // return p0p1p2
+//  sprintf(buffer,"%d",a);
+  char* ret=cmdParam(param);
+  if(key!=NULL) {  attrSet(key,ret);  }   
+  return ret;
 }
 
 /* remove '$' from key */
@@ -476,8 +474,8 @@ char* cmdParam(char **pp) {
       (*pp)++; // skip first $
       p1 = strtok_r(NULL, " ",pp); 
       p1=attrGet(p1);
-      if(p1==NULL) { return EMPTY; }   
-      return p1;
+//      if(p1==NULL) { return EMPTY; }   
+//      return p1;
 
     }else {
       p1 = strtok_r(NULL, " ",pp);        

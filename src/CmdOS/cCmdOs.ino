@@ -342,6 +342,8 @@ boolean is(String str) { return (str!=NULL || str!=EMPTYSTRING); }
 boolean is(String str,int min,int max) { if(str==NULL || str==EMPTYSTRING ) { return false; } int len=str.length(); return len>=min && len<max; }
 
 /* convert to correct char */
+char* to(byte d) { sprintf(buffer,"%d",d); return buffer; }
+char* to(int d) { sprintf(buffer,"%d",d); return buffer; }
 char* to(long d) { sprintf(buffer,"%d",d); return buffer; }
 char* to(boolean d) { sprintf(buffer,"%d",d); return buffer; }
 char* to(char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { return p; } else { return EMPTY; } }
