@@ -1,28 +1,32 @@
 log "find random number"
-$a random 1 99
+
+$a = random 1 99
 $g = 50
+$max = 20
 $t = 1
 
 #loop
+{
   log "your guess" $g "==" $a "try:"$t
 
   $t = $t + 1
-  if $t > 10 2
+  if $t > $max  {
     log "to many trys" $t
-    run 
-
-  if $g > $a 3
+    end
+  }
+  if $g > $a {
     log "to high"
     $g = $g / 2
     goto #loop
-
-  if $g < $a 4
+  }
+  if $g < $a {
     log "to low"
     $x = $g / 2
     $g = $g + $x
     goto #loop
+  }
+} until $g == $a
 
-  if $g == $a #end
-  
 #end 
   log "FOUND" $a
+  attrClear

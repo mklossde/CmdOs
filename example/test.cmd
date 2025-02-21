@@ -54,3 +54,6 @@ $a = 1
 {
   $a = $a + 1
 } until $a > 10
+
+log "TEST DONE OK"
+

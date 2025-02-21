@@ -12,14 +12,14 @@ develop by mk@almi.de
 	<a href="doc/CmdOscms.md">See cmd description for details</a>
 
 	All functions are controled via cmd
-	e.g. drawLine 0 0 10 0 => draw a line on a display
+	e.g. random 1 10 => get a random number
 	
 See <a href='example/example.md'>examples</a>
 
 ## Build own Application
 
-CmdOS do not have to run on its one, like Tasmota or EspHome. 
-The idea is to build up own development and include basic functions with <a href='release/CmdOs_V010.ino'>CmdOS</a>.
+CmdOS do not have to run on its own, like Tasmota or EspHome. 
+The idea is to build up own development and include CmdOS as a singel file/tab <a href='release/CmdOs_V010.ino'>CmdOS</a>.
 
 	// On Application
 
@@ -58,8 +58,8 @@ The idea is to build up own development and include basic functions with <a href
 	int _webPort = 80;
 	AsyncWebServer server(_webPort);
 	
-	char* appCmd(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,char *p6,char *p7,char *p8,char *p9) {
-		return "unkown cmd"; // add application cmd handling here 
+	char* appCmd(char *cmd, char **param) {
+	  return cmd; // unkown cmd => use cmd as string
 	}
 
 	void webApp() {	} // add application web handling here ----------------------------------------------------------
