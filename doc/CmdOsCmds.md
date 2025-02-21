@@ -17,9 +17,23 @@ if required mark cmd end with ";" (e.g. "stat;")
 ## stats
 	stat => show app status
 		e.g. "AppInfo MatrixHub V1.0.0 eeType:Os02 login:1 access_level:0"
+
+## freeHeap
+	show the freeHeap of memory
+		e.g. "196152"
 		
 ## login [password]
 	login [PASSWORD] => login with password or logout without password
+
+## restart 
+	restart the esp
+
+## sleep [mode] [sleepTimeMS]
+	goto sleep
+	- mode 0 => swith all off
+	- mode 1 => wifi off 
+	- mode 2 => LightSleep for sleepTimeMS
+	- mode 3 => DeepSleep for sleepTimeMS
 
 # attribntues
 
@@ -34,11 +48,13 @@ set new attribue with $NAME infront of cmd
 	e.g. $a stat => $a = "AppInfo MatrixHub V1.0.0 eeType:Os02 login:1 access_level:0"
 or clculate with =
 	e.g. $a = $a +1
-
+	
+attr a VALUE => set a to value
 attrDel $a => remove
-attr => list all attributes 
+attrs => list all attributes 
 attrClear PREFIX => clear all attributes with prefix (without prefix => all attributes)
-random MIN MAX => generate random int betwen min and max
+random MIN MAX => generate random int betwen min and max ( e.g. $a = random 1 10)
+
 
 ## mqttAttr TOPIC 0/1
 receive all values from topic into $TOPIC (1=enable/0=disable)
@@ -61,7 +77,7 @@ e.g.
 "goto loop"
 
 ## if
-if a == b GOTOorSKIP
+if a == b CMD or {}
 the if will check if the int condition is true (possible are == != <= >= < >)
 a and b will converted to int before validation. (e.g. a == b => toInt(a) == toInt(b))
 
@@ -78,8 +94,21 @@ e.g.
 	log "draw a line"
   drawRect 0 0 10 10
 
+## elseif a == b CMD or {} 
+	e.g. ..} elseif a == 1 {..
+## else cmd or {}
+	e.g. ..} else goto start 
+	
+## {} until RULE
+repeat unitl rule 
+e.g. .. } until $a > 10
+
+
 ## wait TIME
 wait timeInMs before next cmd
+
+## exec $a
+execute a command (e.g. attr a "run t" =>  exec $a)
 
 ## log
 log the given infos 
@@ -95,6 +124,12 @@ starts a set of cmds as a programm. line by line.
 ## run PRG
 run prg from filesystem 
 
+## end 
+end a programm (and clear prg from memory)
+
+## error MESSAGE
+stop prg with an error
+	e.g. stop prg an a program error 
 
 ## stop
 stop actual running prg
@@ -112,6 +147,8 @@ continue actual prg
 ## reset value
 rest all configurations after validation. 
 call "rest" will return a random numner. call "reset NUMBER" to rest all
+
+
 
 ## save
 save all configurations

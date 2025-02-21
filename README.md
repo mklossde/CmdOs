@@ -9,10 +9,20 @@ develop by mk@almi.de
 
 
 ## Cmd 
-	<a href="doc/CmdOscms.md">See cmd description for details</a>
+<a href="doc/CmdOscms.md">See cmd description for details</a>
 
-	All functions are controled via cmd
-	e.g. random 1 10 => get a random number
+All functions are controled via cmd. Mqtt exmaple 
+
+	log "show shelly power every 10 seconds"
+	mqttAttr shellies/shellyem3/emeter/0/power 1
+	#loop
+	  if $shellies/shellyem3/emeter/0/power < 0 {
+		log "PV Power" $shellies/shellyem3/emeter/0/power
+	  }else {
+		log "Actual consume" $shellies/shellyem3/emeter/0/power
+	  }
+	  wait 10000
+	  goto #loop
 	
 See <a href='example/example.md'>examples</a>
 

@@ -4,8 +4,19 @@
 As default a SPIFF filesystem is used
 
 
-## fsDir
+## fsDir MATCH
 list the filesystem to log
+with MATCH list only fiel that match (e.g. fsDir .gif => show all gif-files)
+
+## fsDirSize MATCH
+get number of files 
+with MATCH get numbner of files that match (e.g. fsDirSize *.cmd => numer of cmd-files)
+
+## fsFile MATCH INDEX TYPE
+get info from INDEX file that MATCH (e.g. fsFile .gif 0 0 => get name of first gif-file)
+	TYPE=0 NAME
+	TYPE=1 SIZE
+
 
 ## fsCat FILE
 cat the FILE to log
