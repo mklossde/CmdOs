@@ -126,7 +126,7 @@ void webFileManagerEd(AsyncWebServerRequest *request, String name) {
   File ff = SPIFFS.open(name, FILE_READ);
   if (ff) { html += ff.readString(); }
   ff.close();
-  html += "</textarea><br><input type='submit' name='doSave' value='ok'></form>";
+  html += "</textarea><br><input type='submit' name='doSave' value='save'></form>";
   html = pageEnd(html,EMPTYSTRING);
   request->send(200, "text/html", html);
 }
@@ -170,7 +170,10 @@ void webFileManager(AsyncWebServerRequest *request) {
   else if (request->hasParam("rename")) { webFileManagerRename(request, webParam(request,"name")); return; }
   else if (request->hasParam("doRename")) { fsRename(webParam(request,"name"), webParam(request,"newname")); }
   else if (request->hasParam("ed")) { webFileManagerEd(request, webParam(request,"name")); return; }
-  else if (request->hasParam("doSave")) { webFileManagerSave(request, webParam(request,"name"), webParam(request,"value")); }
+  else if (request->hasParam("doSave")) { 
+    webFileManagerSave(request, webParam(request,"name"), webParam(request,"value")); 
+    webFileManagerEd(request, webParam(request,"name")); return;
+  }
   else if (request->hasParam("doUploadUrl")) { message=fsDownload(webParam(request,"url"), webParam(request,"name"));  }
 
   String html = "";

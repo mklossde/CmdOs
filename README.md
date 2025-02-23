@@ -9,7 +9,7 @@ develop by mk@almi.de
 
 
 ## Cmd 
-<a href="doc/CmdOscms.md">See cmd description for details</a>
+<a href="doc/CmdOsCmds.md">See cmd description for details</a>
 
 All functions are controled via cmd. Mqtt exmaple 
 
