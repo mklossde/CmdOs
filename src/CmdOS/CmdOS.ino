@@ -65,14 +65,14 @@ void webApp() {
 
 void setup() {
   cmdOSSetup();
-  if(isModeOk()) { 
+  if(isModeNoError()) { 
     // all work fine - app setup here
   }  
 }
 
 void loop() {
   cmdOSLoop();
-  if(isModeOk()) { 
+  if(isModeNoError()) { 
     // all works fine - app loop here 
   }  
 }
