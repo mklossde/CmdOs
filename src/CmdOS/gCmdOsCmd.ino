@@ -140,8 +140,10 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "rest")) { ret=rest(cmdParam(param)); } // 
   else if(equals(cmd, "cmdRest")) { ret=cmdRest(cmdParam(param)); } // call http/rest and exute retur nbody as cmd
 
-  else if(equals(cmd, "setLed") && isAccess(ACCESS_ADMIN)) { ret=ledInit(toInt(cmdParam(param)),toBoolean(cmdParam(param))); } //
+  else if(equals(cmd, "ledInit") && isAccess(ACCESS_ADMIN)) { ret=ledInit(toInt(cmdParam(param)),toBoolean(cmdParam(param))); } //
   else if(equals(cmd, "led") && isAccess(ACCESS_CHANGE)) { ret=ledSwitch(cmdParam(param),cmdParam(param)); }
+  else if(equals(cmd, "swInit") && isAccess(ACCESS_ADMIN)) { ret=swInit(toInt(cmdParam(param)),toBoolean(cmdParam(param)),toInt(cmdParam(param))); } //
+  else if(equals(cmd, "swCmd") && isAccess(ACCESS_ADMIN)) { ret=swCmd(toInt(cmdParam(param)),cmdParam(param)); }
 
   // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
   else if(equals(cmd, "timer") && isAccess(ACCESS_CHANGE)) { timerAdd(toBoolean(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),cmdParam(param));  }
@@ -392,7 +394,7 @@ void attrSet(char *key,String value) {
 void attrSet(char *key,char *value) { attrMap.replace(_toAttr(key),value,strlen(value));  }
 void attrDel(char *key) { attrMap.del(_toAttr(key)); }
 char* attrInfo() {
-   sprintf(buffer,"");
+  sprintf(buffer,"");
   for(int i=0;i<attrMap.size();i++) {  
     char *key=attrMap.key(i);
     char *value=(char*)attrMap.get(i);
@@ -574,7 +576,7 @@ char* prgStop() { *_prgTime=2; return "stop"; }
 
 char* cmdPrg(char* prg) {   
   if(_prg!=NULL) { delete[] _prg; _prg=NULL; _prgPtr=NULL; } // clear old prg
-  if(prg==NULL) { return "prg missing"; }
+  if(!is(prg)) { return "prg missing"; }
   _prg=prg;
 //  replace(_prg,'\r',';'); // 
 //  replace(_prg,'\n',';'); // newLine => cmd End  

@@ -69,7 +69,7 @@ int eeAppPos=0;
 //-----------------------------------------------------------------------------
 
 char* cmdLine(char* prg); // execute one line 
-char* cmdPrg(char* prg); // execute a cmd-prg
+char* cmdPrg(char* prg); // execute a cmd-prg 
 char* cmdFile(char* p0); // execute a cmd-file 
 
 //-----------------------------------------------------------------------------
@@ -110,6 +110,9 @@ private:
       if(_isMap) { _key = (char**)realloc(_key, _max * sizeof(char*)); }    
       _vsize = (int*)realloc(_vsize, _max * sizeof(int));
     }
+  }
+  void growTo(int max,void *obj) {
+    for(int i=_max;i<max;i++) { grow(1);_array[_max-1]=obj; }
   }
 
 public:
@@ -172,6 +175,10 @@ public:
   // list ------------------------------------------------
   /* add object to list e.g. list.add(obj); */
   void add(void *obj) { if(_index>=_max) { grow(1); } _array[_index++]=obj; } 
+  void addIndex(int index,void *obj) { 
+//    if(index>=_max) { grow(index-_max+1); } 
+    if(index>=_max) { growTo(index+1,NULL); }     
+    _array[index]=obj; if(index>=_index) { _index=index+1; } } 
   /* get obejct at index e.g. char* value=(char*)list.get(0); */
   void* get(int index) { if(index>=0 && index<_index) { return _array[index]; } else { return NULL; } }  
   /* del object at index e.g. char* old=(char*)list.del(0); */

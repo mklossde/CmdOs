@@ -37,9 +37,10 @@ boolean bootSafe=true;    // enable/disbale boot safe
 int ledGpio=15;            // io of led
 boolean ledOnTrue=true;           // gpio false=led-on
 
-#define swEnable false        // enable/disbale switch
-int swGpio=13;             // io pin of sw 
-boolean swOnTrue=false;           // gpio false=sw-pressed
+#define swEnable true        // enable/disbale switch
+int swGpio=0;                // io pin of sw 
+int swTimeBase=100;       // prell and lonePress Timebase (e.g. 100ms)
+boolean swOnTrue=false;      // gpio false=sw-pressed
 
 
 int _webPort = 80;

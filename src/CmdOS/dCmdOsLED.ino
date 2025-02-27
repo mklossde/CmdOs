@@ -49,20 +49,6 @@ void ledBlinkPattern(byte max,int (*blinkPattern)[]) {
 
 //--------------------------
 
-char* ledInit(int pin,boolean on) {
-  if(pin!=-1) { ledGpio=pin; ledOnTrue=on; }
-  sprintf(buffer,"led ping:%d on:%d",ledGpio,ledOnTrue); return buffer;
-}
-
-char* ledSwitch(char *c,char *c2) {
-  if(isBoolean(c)) { boolean b=toBoolean(c); ledSet(b); sprintf(buffer,"%d",b); return buffer; }
-  // ledBlink time speed 
-  else if(isInt(c)) { int b=toInt(c); int b2=toInt(c2); ledBlink(b,b2); sprintf(buffer,"%d %d",b,b2); return buffer; } 
-  else { return EMPTY; }
-}
-
-//--------------------------
-
 void ledSetup() {
   if(!ledEnable) { return ; }
   pinMode(ledGpio, OUTPUT);  
@@ -88,6 +74,20 @@ void ledLoop() {
     ledShow();      
   }
 }  
+
+
+char* ledInit(int pin,boolean on) {
+  if(pin!=-1) { ledGpio=pin; ledOnTrue=on; ledSetup(); }
+  sprintf(buffer,"led pin:%d on:%d",ledGpio,ledOnTrue); return buffer;
+}
+
+char* ledSwitch(char *c,char *c2) {
+  if(isBoolean(c)) { boolean b=toBoolean(c); ledSet(b); sprintf(buffer,"%d",b); return buffer; }
+  // ledBlink time speed 
+  else if(isInt(c)) { int b=toInt(c); int b2=toInt(c2); ledBlink(b,b2); sprintf(buffer,"%d %d",b,b2); return buffer; } 
+  else { return EMPTY; }
+}
+
 #else
 
 void ledBlink(byte times, int blinkSpeed) {}
@@ -97,6 +97,9 @@ void ledOff() {}
 void ledSetup() {}
 void ledLoop() {}
 
+char* ledInit(int pin,boolean on) { return EMPTY; }
+char* ledSwitch(char *c,char *c2) { return EMPTY; }
+
 #endif
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -104,15 +107,15 @@ void ledLoop() {}
 // sw
 
 #if swEnable
-byte sw_time_base=100; // time base of sw in ms
+//int _sw_time_base=100; // time base of sw in ms
 
 using ButtonEvent = void (*)(byte shortCount,unsigned long longTime); //type aliasing //C++ version of: typedef void (*InputEvent)(const char*)
 unsigned long *switchTime = new unsigned long(0); // sw timer
 
 
-#define  swTickShort 5 // 5*100 => 500ms;
-#define swTickLong 10 // 10*100 => 1s;
-#define swTickMax 255 // too long press 
+#define  swTickShort 4 // 5*100 => 500ms;
+#define swTickLong 5 // 10*100 => 1s;
+#define swTickMax 255 // too long press 255*100 => 25.5s 
 
 class Switch { 
   
@@ -124,28 +127,41 @@ private:
   byte swShortCount=0;  // number of short-press count
   unsigned long swLastTime=0; // last change
   byte swTickCount=0;
-  
-  MyEvent _onDown=NULL;
   ButtonEvent _onPress=NULL;
+  List cmdList; // 0=onDown,1..9=on n click,10=on Long
+  
+public:
 
-
-//  SW SETUP    =>  3,5s = SETUP CLIENT (scan and setup client)
-//  SW AP       =>  5,5s = mode AP
-//  SW RESET    =>  10,5s = RESET ALL
+  char* setCmd(int nr,char *cmd) {
+    if(nr>11) { return EMPTY; }
+    else if(nr<0) {
+      sprintf(buffer,"");
+      for(int i=0;i<cmdList.size();i++) {  
+        char *value=(char*)cmdList.get(i);
+        if(is(value)) {
+          sprintf(buffer+strlen(buffer),"swCmd %d \"%s\"\n",i,value);
+        }
+      }
+      return buffer;
+    }else if(!is(cmd)) { char *cmd=(char*)cmdList.get(nr); sprintf(buffer,"swCmd nr:%d cmd:%s",nr,to(cmd)); return buffer;}    
+    else if(size(cmd)<2) { cmdList.del(nr); sprintf(buffer,"swCmd del nr:%d",nr); return buffer; }
+    else { cmdList.addIndex(nr,copy(cmd)); sprintf(buffer,"swCmd set nr:%d cmd:%s",nr,to(cmd)); return buffer;}
+  }
 
   // sw press short times and  long time in ms (e.g. s_s_l => 2,600ms,2)  
   void swPress(byte shortCount,unsigned long longTime) {
-    sprintf(buffer,"SW press short:%d long:%dms",shortCount,longTime); logPrintln(LOG_INFO,buffer); 
-//    if(shortCount==5 && longTime>0) { logPrintln("SW RESET"); bootClear(); bootRestart(); }        //  10,5s = RESET ALL
-//    else  if(shortCount==4 && longTime>0) { logPrintln("SW AP"); mode=MODE_WIFI_AP; wifiSetup(); } //  5,5s = switch to mode AP
-//    else if(shortCount==3 && longTime>0) { logPrintln("SW ScanSetup"); wifiScanSetup(); }              //  3,5s = SETUP CLIENT  
-    if(_onPress!=NULL) { _onPress(shortCount,longTime); }
+    sprintf(buffer,"SW press short:%d long:%dms",shortCount,longTime); logPrintln(LOG_DEBUG,buffer); 
+    if(longTime==0) {
+      char *cmd=(char*)cmdList.get(shortCount); if(is(cmd)) { char *c=copy(cmd); cmdLine(c); delete[] c; }
+    }else {
+      char *cmd=(char*)cmdList.get(10); if(is(cmd)) { char *c=copy(cmd); cmdLine(c); delete[] c; }
+    }
   }
   
   // sw first (immediately) 
   void swFirstDown() {
-//    sprintf(buffer,"SW DOWN"); logPrintln(buffer);     
-    if(_onDown!=NULL) { _onDown(); }
+//    sprintf(buffer,"SW DOWN"); logPrintln(LOG_DEBUG,buffer);     
+    char *cmd=(char*)cmdList.get(0); if(is(cmd)) {char *c=copy(cmd); cmdLine(c); delete[] c; } // cmdLine / cmdPrg
   }
 
 public:
@@ -178,8 +194,8 @@ public:
     if(swTickCount>=swTickMax) { swShortCount=0; swTickCount=0; } // max time => reset     
   }
   
-  Switch(int gpio,boolean swOn,ButtonEvent onPress,MyEvent onDown) { 
-    _swGpio=swGpio; _swOn=swOn; _onPress=onPress; _onDown=onDown; swLast=!swOn;
+  Switch(int gpio,boolean swOn,ButtonEvent onPress) { 
+    _swGpio=swGpio; _swOn=swOn; _onPress=onPress; swLast=!swOn;
     pinMode(_swGpio, INPUT_PULLUP);  // input with interal pullup ( _swGpio=GND (false) => pressed) 
     sprintf(buffer,"SW setup gpio:%d on:%d",_swGpio,_swOn); logPrintln(LOG_INFO,buffer);
   }  
@@ -189,17 +205,28 @@ Switch* sw=NULL;
 
 void swSetup() {
   if(!swEnable) { return ; }
-  sw=new Switch(swGpio,swOnTrue,NULL,NULL);
+  sw=new Switch(swGpio,swOnTrue,NULL);
+}
+
+char* swInit(int pin,boolean on,int sw_time_base) {
+  if(pin!=-1) { swGpio=pin; swOnTrue=on; swTimeBase=sw_time_base; swSetup(); }
+  sprintf(buffer,"sw pin:%d on:%d",swGpio,swOnTrue); return buffer;
+}
+
+char* swCmd(int i,char *cmd) {
+  if(sw==NULL) { return EMPTY; } 
+  return sw->setCmd(i,cmd);
 }
 
 void swLoop() {
   if(!swEnable) { return ; }
-  if(sw!=NULL && isTimer(switchTime, sw_time_base)) { sw->loop(); } // every 100ms
+  if(sw!=NULL && isTimer(switchTime, swTimeBase)) { sw->loop(); } // every 100ms
 }
 
 #else
 void swSetup() {}
 void swLoop() {}
+char* swInit(int pin,boolean on) { return EMPTY; }
 #endif
 
 

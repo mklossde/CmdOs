@@ -451,9 +451,9 @@ void sleep(char* sleepMode,char *sleepTimeMS) {
       ledBlink(count,100); // blink count
       count++;    
     }
-    if(count==1) {  logPrintln(LOG_SYSTEM,"BOOTSW ap mode");mode=MODE_WIFI_AP; } // hold sw >=5s => Mode Wifi AccessPoint
+    if(count==1) {  logPrintln(LOG_SYSTEM,"BOOTSW ap mode"); eeMode=EE_MODE_AP; } // hold sw >=5s => Mode Wifi AccessPoint
     else if(count==2) {  } 
-    else if(count==3) {  logPrintln(LOG_SYSTEM,"BOOTSW clear");bootClear(); espRestart("SW clear"); } // hold sw >=5s => reset
+//TODO find better way    else if(count==3) {  logPrintln(LOG_SYSTEM,"BOOTSW clear");bootClear(); espRestart("SW clear"); } // hold sw >=5s => reset
   }
 #else 
   void bootSW() {}
@@ -603,7 +603,7 @@ void wifiConnecting() {
 //        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try  
 
       }else if(bootWifiCount<MAX_NO_WIFI) {              
-        if(serialEnable) {sprintf(buffer,"%d",WiFi.status()); Serial.print(buffer); }   
+//        if(serialEnable) {sprintf(buffer,"%d",WiFi.status()); Serial.print(buffer); }   
         bootWifiCount++;    
       
       } else if( eeMode == EE_MODE_WIFI_TRY) {  // try faild
@@ -682,7 +682,7 @@ void wifiValidate() {
     return ;
   }else if(eeMode==EE_MODE_SETUP) { 
     wifiAPConnectoToSetup(); 
-    if(serialEnable) { Serial.print("s");Serial.print(bootWifiCount); Serial.print(WiFi.status()); }
+//    if(serialEnable) { Serial.print("s");Serial.print(bootWifiCount); Serial.print(WiFi.status()); }
     if(isTimer(eeTime, okWait)) {
 //      bootWifiCount++;
 //      if(bootWifiCount>MAX_NO_SETUP) { // set_up failed => switch to ap
