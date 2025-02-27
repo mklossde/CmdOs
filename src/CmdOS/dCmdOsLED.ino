@@ -109,7 +109,7 @@ char* ledSwitch(char *c,char *c2) { return EMPTY; }
 #if swEnable
 //int _sw_time_base=100; // time base of sw in ms
 
-using ButtonEvent = void (*)(byte shortCount,unsigned long longTime); //type aliasing //C++ version of: typedef void (*InputEvent)(const char*)
+//using ButtonEvent = void (*)(byte shortCount,unsigned long longTime); //type aliasing //C++ version of: typedef void (*InputEvent)(const char*)
 unsigned long *switchTime = new unsigned long(0); // sw timer
 
 
@@ -127,7 +127,7 @@ private:
   byte swShortCount=0;  // number of short-press count
   unsigned long swLastTime=0; // last change
   byte swTickCount=0;
-  ButtonEvent _onPress=NULL;
+  //ButtonEvent _onPress=NULL;
   List cmdList; // 0=onDown,1..9=on n click,10=on Long
   
 public:
@@ -194,8 +194,8 @@ public:
     if(swTickCount>=swTickMax) { swShortCount=0; swTickCount=0; } // max time => reset     
   }
   
-  Switch(int gpio,boolean swOn,ButtonEvent onPress) { 
-    _swGpio=swGpio; _swOn=swOn; _onPress=onPress; swLast=!swOn;
+  Switch(int gpio,boolean swOn) { 
+    _swGpio=swGpio; _swOn=swOn; swLast=!swOn;
     pinMode(_swGpio, INPUT_PULLUP);  // input with interal pullup ( _swGpio=GND (false) => pressed) 
     sprintf(buffer,"SW setup gpio:%d on:%d",_swGpio,_swOn); logPrintln(LOG_INFO,buffer);
   }  
@@ -208,7 +208,7 @@ void swSetup() {
   sw=new Switch(swGpio,swOnTrue,NULL);
 }
 
-char* swInit(int pin,boolean on,int sw_time_base) {
+char* swInit(int pin,boolean on) {
   if(pin!=-1) { swGpio=pin; swOnTrue=on; swTimeBase=sw_time_base; swSetup(); }
   sprintf(buffer,"sw pin:%d on:%d",swGpio,swOnTrue); return buffer;
 }
