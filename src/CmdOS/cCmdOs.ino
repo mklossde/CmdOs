@@ -360,7 +360,8 @@ String toString(const char *text) {  if(!is(text)) { return EMPTYSTRING; } retur
 
 boolean toBoolean(int i) { return i>0; }
 /* convert char* to boolean */
-boolean toBoolean(char *p) { return p!=NULL && (strcmp(p, "on")==0 || strcmp(p, "true")==0 || strcmp(p, "1")==0); }
+//boolean toBoolean(char *p) { return p!=NULL && (strcmp(p, "on")==0 || strcmp(p, "true")==0 || strcmp(p, "1")==0); }
+boolean toBoolean(char *p) { return p!=NULL && strlen(p)>0 && (strcmp(p, "on")==0 || strcmp(p, "true")==0 || atoi(p)>0); }
 /* convert char* to int */
 int toInt(char *p) { if(p!=NULL && strlen(p)>0) { return atoi(p); } else { return -1; } }
 /* convert char* to double */
@@ -376,6 +377,13 @@ boolean isInt(char *p) {
   else if (*x == '+' || *x == '-')  { x++; } // Handle optional sign
   while (*x) { if (!isdigit(*x)) { return false; } else { x++;} }// Non-digit character found
   return true;  // All characters are digits
+}
+
+boolean isBoolean(char *p) { 
+  char *x=p;
+  if (x==NULL || x==EMPTY || *x == '\0') { return false; } // Empty string is not a number
+  if(*x=='t' || *x=='T' || *x=='f' || *x=='F') { return true; }
+  return false;
 }
 
 //-----------------------------------------------------------------------------

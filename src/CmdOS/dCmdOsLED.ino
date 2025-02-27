@@ -18,16 +18,17 @@ byte ledIndex=0;
 
 // direct blink blinkSpeed in ms - just for test/debug/error
 void ledBlink(byte times, int blinkSpeed) {
+  if(times*blinkSpeed>10000) { return ; } // ignore delay >10s
   if(ledEnable) {
-    for(int i=0;i<times;i++) {
-      digitalWrite(ledGpio, LED_ON); delay(blinkSpeed); digitalWrite(ledGpio, !LED_ON); delay(blinkSpeed); ledOn=!LED_ON;             
+    for(int i=0;i<times;i++) {     
+      digitalWrite(ledGpio, ledOnTrue); delay(blinkSpeed); digitalWrite(ledGpio, !ledOnTrue); delay(blinkSpeed); ledOn=!ledOnTrue;             
     }
   }
 }
 void ledSet(boolean on) { digitalWrite(ledGpio, on); ledOn=on; }
 
 void ledOff() {
-  if(ledEnable) { digitalWrite(ledGpio, !LED_ON); ledOn=!LED_ON; }
+  if(ledEnable) { digitalWrite(ledGpio, !ledOnTrue); ledOn=!ledOnTrue; }
   ledBlinkOn=false; 
 }
 
@@ -36,7 +37,7 @@ void ledOff() {
 // show actual led blink 
 void ledShow() {
     if(ledEnable) {
-      if(ledOn) { digitalWrite(ledGpio,LED_ON); }else {  digitalWrite(ledGpio,!LED_ON); }     
+      if(ledOn) { digitalWrite(ledGpio,ledOnTrue); }else {  digitalWrite(ledGpio,!ledOnTrue); }     
     }
 }
 
@@ -48,10 +49,24 @@ void ledBlinkPattern(byte max,int (*blinkPattern)[]) {
 
 //--------------------------
 
+char* ledInit(int pin,boolean on) {
+  if(pin!=-1) { ledGpio=pin; ledOnTrue=on; }
+  sprintf(buffer,"led ping:%d on:%d",ledGpio,ledOnTrue); return buffer;
+}
+
+char* ledSwitch(char *c,char *c2) {
+  if(isBoolean(c)) { boolean b=toBoolean(c); ledSet(b); sprintf(buffer,"%d",b); return buffer; }
+  // ledBlink time speed 
+  else if(isInt(c)) { int b=toInt(c); int b2=toInt(c2); ledBlink(b,b2); sprintf(buffer,"%d %d",b,b2); return buffer; } 
+  else { return EMPTY; }
+}
+
+//--------------------------
+
 void ledSetup() {
   if(!ledEnable) { return ; }
   pinMode(ledGpio, OUTPUT);  
-  sprintf(buffer,"LED setup gpio:%d on:%d",ledGpio,LED_ON); logPrintln(LOG_INFO,buffer);
+  sprintf(buffer,"LED setup gpio:%d on:%d",ledGpio,ledOnTrue); logPrintln(LOG_INFO,buffer);
 }
 
 void ledLoop() {  
@@ -174,7 +189,7 @@ Switch* sw=NULL;
 
 void swSetup() {
   if(!swEnable) { return ; }
-  sw=new Switch(swGpio,SW_ON,NULL,NULL);
+  sw=new Switch(swGpio,swOnTrue,NULL,NULL);
 }
 
 void swLoop() {

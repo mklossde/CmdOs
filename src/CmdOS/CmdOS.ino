@@ -33,13 +33,13 @@ boolean bootSafe=true;    // enable/disbale boot safe
 #define otaEnable false        // enabled/disbale ota update 
 #define updateEnable false     // enabled/disbale update firmware via web 
 
-#define ledEnable false       // enable/disbale serial
-#define ledGpio 4             // io of led
-#define LED_ON true           // gpio false=led-on
+#define ledEnable true       // enable/disbale serial
+int ledGpio=15;            // io of led
+boolean ledOnTrue=true;           // gpio false=led-on
 
 #define swEnable false        // enable/disbale switch
-#define swGpio 13             // io pin of sw 
-#define SW_ON false           // gpio false=sw-pressed
+int swGpio=13;             // io pin of sw 
+boolean swOnTrue=false;           // gpio false=sw-pressed
 
 
 int _webPort = 80;
@@ -67,6 +67,7 @@ void setup() {
   cmdOSSetup();
   if(isModeNoError()) { 
     // all work fine - app setup here
+    appSetup();
   }  
 }
 
@@ -74,5 +75,6 @@ void loop() {
   cmdOSLoop();
   if(isModeNoError()) { 
     // all works fine - app loop here 
+    appLoop();
   }  
 }
