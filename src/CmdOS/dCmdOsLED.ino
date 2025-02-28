@@ -196,21 +196,26 @@ public:
   
   Switch(int gpio,boolean swOn) { 
     _swGpio=swGpio; _swOn=swOn; swLast=!swOn;
-    pinMode(_swGpio, INPUT_PULLUP);  // input with interal pullup ( _swGpio=GND (false) => pressed) 
-    sprintf(buffer,"SW setup gpio:%d on:%d",_swGpio,_swOn); logPrintln(LOG_INFO,buffer);
+    if(swPullUp) { pinMode(_swGpio, INPUT_PULLUP); } // input with interal pullup ( _swGpio=GND (false) => pressed) 
+    else { pinMode(_swGpio, INPUT); }
+    sprintf(buffer,"SW setup gpio:%d on:%d swTimeBase:%d pullUp:%d",_swGpio,_swOn,swTimeBase,swPullUp); logPrintln(LOG_INFO,buffer);
   }  
 };
 
 Switch* sw=NULL;
+unsigned long *switchStartup = new unsigned long(1); // sw timer
 
 void swSetup() {
   if(!swEnable) { return ; }
-  sw=new Switch(swGpio,swOnTrue,NULL);
+  sw=new Switch(swGpio,swOnTrue); 
 }
 
-char* swInit(int pin,boolean on) {
-  if(pin!=-1) { swGpio=pin; swOnTrue=on; swTimeBase=sw_time_base; swSetup(); }
-  sprintf(buffer,"sw pin:%d on:%d",swGpio,swOnTrue); return buffer;
+char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base) {
+  if(pin!=-1) { 
+    swGpio=pin; swOnTrue=on; swTimeBase=sw_time_base; swPullUp=pullUp; ;
+    swSetup(); 
+  }
+  sprintf(buffer,"sw pin:%d on:%d sw_time_base:%d swPullUp:%d",swGpio,swOnTrue,sw_time_base,swPullUp); return buffer;
 }
 
 char* swCmd(int i,char *cmd) {
@@ -220,13 +225,16 @@ char* swCmd(int i,char *cmd) {
 
 void swLoop() {
   if(!swEnable) { return ; }
-  if(sw!=NULL && isTimer(switchTime, swTimeBase)) { sw->loop(); } // every 100ms
+  else if(sw!=NULL && isTimer(switchTime, swTimeBase)) { sw->loop(); } // every 100ms
 }
 
 #else
 void swSetup() {}
 void swLoop() {}
 char* swInit(int pin,boolean on) { return EMPTY; }
+char* swCmd(int i,char *cmd) { return EMPTY; }
+char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base,int sw_setup_time) { return EMPTY; }
+
 #endif
 
 

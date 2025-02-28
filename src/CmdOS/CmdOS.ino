@@ -41,7 +41,7 @@ boolean ledOnTrue=true;           // gpio false=led-on
 int swGpio=0;                // io pin of sw 
 int swTimeBase=100;       // prell and lonePress Timebase (e.g. 100ms)
 boolean swOnTrue=false;      // gpio false=sw-pressed
-
+boolean swPullUp=true;      // enabel pullUp for sw
 
 int _webPort = 80;
 AsyncWebServer server(_webPort);

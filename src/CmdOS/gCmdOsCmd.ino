@@ -142,7 +142,7 @@ char* cmdExec(char *cmd, char **param) {
 
   else if(equals(cmd, "ledInit") && isAccess(ACCESS_ADMIN)) { ret=ledInit(toInt(cmdParam(param)),toBoolean(cmdParam(param))); } //
   else if(equals(cmd, "led") && isAccess(ACCESS_CHANGE)) { ret=ledSwitch(cmdParam(param),cmdParam(param)); }
-  else if(equals(cmd, "swInit") && isAccess(ACCESS_ADMIN)) { ret=swInit(toInt(cmdParam(param)),toBoolean(cmdParam(param)),toInt(cmdParam(param))); } //
+  else if(equals(cmd, "swInit") && isAccess(ACCESS_ADMIN)) { ret=swInit(toInt(cmdParam(param)),toBoolean(cmdParam(param)),toBoolean(cmdParam(param)),toInt(cmdParam(param))); } //
   else if(equals(cmd, "swCmd") && isAccess(ACCESS_ADMIN)) { ret=swCmd(toInt(cmdParam(param)),cmdParam(param)); }
 
   // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
