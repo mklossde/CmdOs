@@ -159,7 +159,7 @@ void eeSetup() {
 }
 
 unsigned long *eeTime = new unsigned long(1);
-int okWait=30000; // wait 30s before WIFI => OK or SETUP => AP => WIFI 
+int okWait=60000; // wait 2min before WIFI => OK or SETUP => AP => WIFI 
 
 void eeLoop() {
 }
@@ -561,7 +561,7 @@ void wifiAPClientConnect() {
   if (numClients>_lastClient) {
     _lastClient=numClients;
     wifiStat=WIFI_CON_APCLIENT;
-    sprintf(buffer,"client %d connect to ap",numClients); logPrintln(LOG_DEBUG,buffer);    
+    sprintf(buffer,"client %d connect to ap",numClients); logPrintln(LOG_INFO,buffer);    
     // esp_wifi_ap_get_sta_list()
   } else if(numClients==0) {  wifiStat=WIFI_CON_CONNECTING; } 
 }
@@ -674,7 +674,7 @@ void wifiValidate() {
   if(eeMode==EE_MODE_AP) { 
     wifiAPClientConnect(); 
     if(isTimer(eeTime, okWait)) {
-      if(!wifiStat!=WIFI_CON_APCLIENT && is(eeBoot.wifi_ssid) && is(eeBoot.wifi_pas)) { 
+      if(wifiStat!=WIFI_CON_APCLIENT && is(eeBoot.wifi_ssid) && is(eeBoot.wifi_pas)) { 
         logPrintln(LOG_ERROR,"NO AP => switch to WIFI");
         eeMode=EE_MODE_START; wifiSetup();
       }
@@ -702,8 +702,10 @@ void wifiValidate() {
       logPrintln(LOG_DEBUG,"WIFI ok => EE_MODE_OK");
       setMode(EE_MODE_OK); 
     }else { 
-      logPrintln(LOG_ERROR,"NO WIFI => switch to SETUP");
-      eeMode=EE_MODE_SETUP; wifiSetup();
+//      logPrintln(LOG_ERROR,"NO WIFI => switch to SETUP");
+//      eeMode=EE_MODE_SETUP; wifiSetup();
+      logPrintln(LOG_ERROR,"NO WIFI => switch to AP");
+      eeMode=EE_MODE_AP; wifiSetup();
     }
 
   }
