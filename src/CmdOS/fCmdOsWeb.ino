@@ -231,7 +231,7 @@ void webFileManager(AsyncWebServerRequest *request) {
     if (!index) {
       logPrintln(LOG_SYSTEM,"Update");
       content_len = request->contentLength();
-      int cmd = (filename.indexOf("spiffs") > -1) ? FILESYSTEM : U_FLASH;  // if filename includes spiffs, update the spiffs partition
+      int cmd = (filename.indexOf("spiffs") > -1) ? U_SPIFFS  : U_FLASH;  // if filename includes spiffs, update the spiffs partition
   #ifdef ESP8266
       Update.runAsync(true);
       if (!Update.begin(content_len, cmd)) {
