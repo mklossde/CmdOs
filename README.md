@@ -28,11 +28,11 @@ See <a href='example/example.md'>examples</a>
 
 ## Upload
 
-see <a href="release/README.me">release</a>
+see <a href="release/">release</a>
 
 ## Build new project with cmdOs
 
-see <a href="simpleProject/README.me">simpleProject</a>
+see <a href="simpleProject/">simpleProject</a>
 
 
 ## Feature:
