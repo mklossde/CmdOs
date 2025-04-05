@@ -97,18 +97,21 @@ void setMode(byte mode) {
   eeMode=mode;
 }
 
+/* set default values */
+void eeDefault() {
+  uint32_t chipid=espChipId(); // or use WiFi.macAddress() ?
+  if(!is(eeBoot.espName) || MODE_DEFAULT==EE_MODE_PRIVAT) { snprintf(eeBoot.espName,20, "OpenOs%08X",chipid);  }
+  if(!is(eeBoot.espPas) || MODE_DEFAULT==EE_MODE_PRIVAT) { sprintf(eeBoot.espPas,user_pas); }     // my private esp password   
+  if(!is(eeBoot.wifi_ssid) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.wifi_ssid,wifi_ssid_default); } // my privat WIFI SSID of AccessPoint
+  if(!is(eeBoot.wifi_pas) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.wifi_pas,wifi_pas_default); } // my privat WIFI SSID of AccessPoint
+  if(!is(eeBoot.mqtt) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.mqtt,mqtt_default); }           // my privat MQTT server
+}
+
 /* on first start prg */
 void eeInit() {
   if(serialEnable) { Serial.println("### INIT");}
   eeMode=EE_MODE_SETUP; 
-
-  uint32_t chipid=espChipId(); // or use WiFi.macAddress() ?
-  if(!is(eeBoot.espName)) { snprintf(eeBoot.espName,20, "OpenOs%08X",chipid);  }
-  if(!is(eeBoot.espPas)) { sprintf(eeBoot.espPas,user_pas); }     // my private esp password   
-  if(!is(eeBoot.wifi_ssid)) {sprintf(eeBoot.wifi_ssid,wifi_ssid_default); } // my privat WIFI SSID of AccessPoint
-  if(!is(eeBoot.wifi_pas)) {sprintf(eeBoot.wifi_ssid,wifi_pas_default); } // my privat WIFI SSID of AccessPoint
-  if(!is(eeBoot.mqtt)) {sprintf(eeBoot.mqtt,mqtt_default); }           // my privat MQTT server
-
+  eeDefault();
   eeSave();
 }
 
@@ -116,6 +119,8 @@ void eeInit() {
 void eeSetup() {
 //TODO show restart reason
   if(MODE_DEFAULT==EE_MODE_FIRST) { bootClear(); } // is INIT => reset ALL
+  else if(MODE_DEFAULT==EE_MODE_PRIVAT) {  if(serialEnable) { Serial.println("### MODE PRIVAT"); } eeDefault(); eeMode=EE_MODE_WIFI_TRY; return; }
+
   eeRead();
 
   if(strcmp(eeType,bootType)!=0) {  // type wrong
@@ -231,14 +236,6 @@ char* bootReset(char *p) {
   int i=toInt(p);
   if(i>1 && i==_bootRestVal) { bootClear(); return "reset done";} // do reset 
   else { _bootRestVal=random(2,99); sprintf(buffer,"%d",_bootRestVal); return buffer; } // without set new reset value
-}
-
-void bootPrivat() {
-  sprintf(eeBoot.wifi_ssid,wifi_ssid_default); // my privat WIFI SSID of AccessPoint
-  sprintf(eeBoot.wifi_pas,wifi_pas_default);   // my privat WIFI password of AccessPoint
-  sprintf(eeBoot.espPas,user_pas);   // my privat WIFI password of AccessPoint
-  sprintf(eeBoot.mqtt,mqtt_default);            // my privat MQTT server
-  eeMode=EE_MODE_PRIVAT; // set privat mode 
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -461,13 +458,12 @@ void sleep(char* sleepMode,char *sleepTimeMS) {
 #endif
 
 void bootSetup() {
-
-
-  // reset sw
-  bootRead();
-  bootSW();
-  if(MODE_DEFAULT==EE_MODE_PRIVAT) { bootPrivat(); } // is privat mode as default => use privat config
-
+  if(MODE_DEFAULT!=EE_MODE_PRIVAT) { 
+    // reset sw
+    bootRead();
+    bootSW();
+  }
+  
   sprintf(buffer,"BOOT init mode:%d espName:%s espBoard:%s wifi_ssid:%s timestamp:%d", eeMode,eeBoot.espName,eeBoot.espBoard,eeBoot.wifi_ssid,eeBoot.timestamp); logPrintln(LOG_INFO,buffer);
 }
 
