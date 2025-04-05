@@ -6,6 +6,8 @@
 
 Create a new project and add CmdOS_x.ino as CmdOS-Tab.
 
+![ArduinoIDEExample](example.jpg)
+
 ## Build own Application
 
 CmdOS do not have to run on its own, like Tasmota or EspHome. 
@@ -15,7 +17,6 @@ The idea is to build up own development and include CmdOS as a singel file/tab <
 
 Replace first application-tab with
 
-![ArduinoIDEExample](example.jpg)
 
 	#include <ESPAsyncWebServer.h>
 	 
