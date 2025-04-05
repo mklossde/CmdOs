@@ -13,8 +13,8 @@ const char *wifi_ssid_default = ""; // PRIVAT_WIFI_SSID; // define in privatdata
 const char *wifi_pas_default = ""; //PRIVAT_WIFI_PAS;   // define in privatdata.h 
 const char *mqtt_default = ""; //PRIVAT_MQTTSERVER;     // define in privatdata.h 
 
-//byte MODE_DEFAULT=21; // normal=21=MODE_WIFI_CL_TRY / MODE_PRIVAT=20=load privat values, 
-byte MODE_DEFAULT=0; // EE_MODE_FIRST=0=RESET on start
+byte MODE_DEFAULT=21; // normal=21=MODE_WIFI_CL_TRY / MODE_PRIVAT=20=load privat values, 
+//byte MODE_DEFAULT=0; // EE_MODE_FIRST=0=RESET on start
 
 boolean serialEnable=true; // enable/disbale serial in/out
 
