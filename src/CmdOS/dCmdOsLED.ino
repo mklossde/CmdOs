@@ -231,9 +231,8 @@ void swLoop() {
 #else
 void swSetup() {}
 void swLoop() {}
-char* swInit(int pin,boolean on) { return EMPTY; }
 char* swCmd(int i,char *cmd) { return EMPTY; }
-char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base,int sw_setup_time) { return EMPTY; }
+char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base) { return EMPTY; }
 
 #endif
 

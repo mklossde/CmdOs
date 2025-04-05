@@ -6,7 +6,7 @@
 #include <sys/time.h>     // time
 
 /* cmdOS from openON.org develop by mk@almi.de */
-const char *cmdOS="V.0.2.2-SNAPSHOT";
+const char *cmdOS="V.0.2.3";
 char *APP_NAME_PREFIX="CmdOs";
 
 String appIP="";

@@ -1,5 +1,4 @@
 
-// CmdOS 
 // Application Start SRC
 
 #include <ESPAsyncWebServer.h>
@@ -14,7 +13,8 @@ const char *wifi_ssid_default = ""; // PRIVAT_WIFI_SSID; // define in privatdata
 const char *wifi_pas_default = ""; //PRIVAT_WIFI_PAS;   // define in privatdata.h 
 const char *mqtt_default = ""; //PRIVAT_MQTTSERVER;     // define in privatdata.h 
 
-byte MODE_DEFAULT=21; // MODE_WIFI_CL_TRY=21 / MODE_PRIVAT
+//byte MODE_DEFAULT=21; // normal=21=MODE_WIFI_CL_TRY / MODE_PRIVAT=20=load privat values, 
+byte MODE_DEFAULT=0; // EE_MODE_FIRST=0=RESET on start
 
 boolean serialEnable=true; // enable/disbale serial in/out
 
@@ -27,17 +27,17 @@ boolean bootSafe=true;    // enable/disbale boot safe
 #define enableFs true         // enable fs / SPIFFS
 
 #define netEnable true       // enable/disbale network ping/dns/HttpCLient 
-#define webSerialEnable false // enable/disbale web serial
+#define webSerialEnable true // enable/disbale web serial
 #define mqttEnable false      // enable/disbale mqtt
 
-#define otaEnable false        // enabled/disbale ota update 
-#define updateEnable false     // enabled/disbale update firmware via web 
+#define otaEnable true        // enabled/disbale ota update 
+#define updateEnable true     // enabled/disbale update firmware via web 
 
-#define ledEnable true       // enable/disbale serial
+#define ledEnable false       // enable/disbale serial
 int ledGpio=15;            // io of led
 boolean ledOnTrue=true;           // gpio false=led-on
 
-#define swEnable true        // enable/disbale switch
+#define swEnable false        // enable/disbale switch
 int swGpio=0;                // io pin of sw 
 int swTimeBase=100;       // prell and lonePress Timebase (e.g. 100ms)
 boolean swOnTrue=false;      // gpio false=sw-pressed

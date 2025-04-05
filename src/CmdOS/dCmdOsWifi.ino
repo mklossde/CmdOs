@@ -115,6 +115,7 @@ void eeInit() {
 /** e setup */
 void eeSetup() {
 //TODO show restart reason
+  if(MODE_DEFAULT==EE_MODE_FIRST) { bootClear(); } // is INIT => reset ALL
   eeRead();
 
   if(strcmp(eeType,bootType)!=0) {  // type wrong
@@ -796,6 +797,8 @@ void otaSetup() {
 
   if(is(eeBoot.espName)) { ArduinoOTA.setHostname(eeBoot.espName); }
   if(is(eeBoot.espPas)) { ArduinoOTA.setPassword(eeBoot.espPas);}
+  else { ArduinoOTA.setPassword(user_admin); }
+  
 
   logPrintln(LOG_DEBUG,"ota start");
   ArduinoOTA.begin();
