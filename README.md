@@ -32,7 +32,7 @@ see <a href="release/README.me">release</a>
 
 ## Build new project with cmdOs
 
-see <a href="simpleProject/newproject.me">release</a>
+see <a href="simpleProject/README.me">simpleProject</a>
 
 
 ## Feature:
