@@ -6,9 +6,9 @@
 #include <sys/time.h>     // time
 
 /* cmdOS from openON.org develop by mk@almi.de */
-const char *cmdOS="V.0.2.4";
+const char *cmdOS="V.0.2.5";
 char *APP_NAME_PREFIX="CmdOs";
-
+ 
 String appIP="";
 #define MAX_DONWLOAD_SIZE 10000
 

@@ -67,7 +67,7 @@ The Network time is received from ntp-server, or gateway (if no npt-server is de
 
 If you use/like this project please [https://buymeacoffee.com/openon](https://buymeacoffee.com/openon) (a good choise is 1Euro per ESP a year ;-)  
 
-![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](images/OpenOnOrg.gif) a OpenOn.org project - develop by mk@almi.de 
 
 
 

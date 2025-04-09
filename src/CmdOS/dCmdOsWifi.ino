@@ -101,7 +101,7 @@ void setMode(byte mode) {
 void eeDefault() {
   uint32_t chipid=espChipId(); // or use WiFi.macAddress() ?
   if(!is(eeBoot.espName) || MODE_DEFAULT==EE_MODE_PRIVAT) { snprintf(eeBoot.espName,20, "OpenOs%08X",chipid);  }
-  if(!is(eeBoot.espPas) || MODE_DEFAULT==EE_MODE_PRIVAT) { sprintf(eeBoot.espPas,user_pas); }     // my private esp password   
+  if((!is(eeBoot.espPas) || MODE_DEFAULT==EE_MODE_PRIVAT)) { sprintf(eeBoot.espPas,user_pas); }     // my private esp password   
   if(!is(eeBoot.wifi_ssid) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.wifi_ssid,wifi_ssid_default); } // my privat WIFI SSID of AccessPoint
   if(!is(eeBoot.wifi_pas) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.wifi_pas,wifi_pas_default); } // my privat WIFI SSID of AccessPoint
   if(!is(eeBoot.mqtt) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.mqtt,mqtt_default); }           // my privat MQTT server
@@ -432,7 +432,7 @@ void sleep(char* sleepMode,char *sleepTimeMS) {
   sprintf(buffer,"SLEEP %d %d",m,s);logPrintln(LOG_INFO,buffer);
   sleep(m,(long)s);
 }
-
+ 
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -776,13 +776,13 @@ void otaSetup() {
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH) { type = "sketch"; }
       else {  type = "filesystem"; } // U_SPIFFS
-      FILESYSTEM.end();
+//      FILESYSTEM.end();
       logPrintln(LOG_INFO,"Start updating " + type);
     })
     .onEnd([]() { logPrintln(LOG_INFO,"End");})
-    .onProgress([](unsigned int progress, unsigned int total) { sprintf(buffer,"Progress: %u%%", (progress / (total / 100))); logPrintln(LOG_DEBUG,buffer); })
+    .onProgress([](unsigned int progress, unsigned int total) { sprintf(buffer,"Progress: %u%%", (progress / (total / 100))); logPrintln(LOG_INFO,buffer); })
     .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
+      sprintf(buffer,"Error[%u]: ", error); logPrintln(LOG_ERROR,buffer);
       if (error == OTA_AUTH_ERROR) { logPrintln(LOG_INFO,"Auth Failed");
       } else if (error == OTA_BEGIN_ERROR) { logPrintln(LOG_INFO,"Begin Failed");
       } else if (error == OTA_CONNECT_ERROR) { logPrintln(LOG_INFO,"Connect Failed");
@@ -792,11 +792,9 @@ void otaSetup() {
     });
 
   if(is(eeBoot.espName)) { ArduinoOTA.setHostname(eeBoot.espName); }
-  if(is(eeBoot.espPas)) { ArduinoOTA.setPassword(eeBoot.espPas);}
-  else { ArduinoOTA.setPassword(user_admin); }
+  if(is(eeBoot.espPas)) { ArduinoOTA.setPassword(eeBoot.espPas); logPrintln(LOG_INFO,"OTA setup ESPPAS"); }
+  else { ArduinoOTA.setPassword("admin"); logPrintln(LOG_INFO,"OTA setup admin");  }
   
-
-  logPrintln(LOG_DEBUG,"ota start");
   ArduinoOTA.begin();
 }
 
