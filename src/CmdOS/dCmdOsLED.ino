@@ -172,7 +172,7 @@ private:
   unsigned long swLastTime = 0;  // last change
   byte swTickCount = 0;
   //ButtonEvent _onPress=NULL;
-  List cmdList;  // 0=onDown,1..9=on n click,10=on Long
+  MapList cmdList;  // 0=onDown,1..9=on n click,10=on Long
 
 public:
 

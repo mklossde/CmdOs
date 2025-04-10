@@ -91,7 +91,7 @@ static String EMPTYSTRING="";
 int minValueLen=11;
 
 /* list of object and map of key=value */
-class List {
+class MapList {
 private:
   int _index=0; int _max=0;
   void** _array=NULL; // contains values 
@@ -198,14 +198,14 @@ public:
 
   /* size of list e.g. int size=list.size(); */
   int size() { return _index; }
-  List(int max) {  grow(max); }
-  List() {   }
-  List(boolean isMap) {  _isMap=isMap;  } // enable as map
-  ~List() { delete _array; if(_isMap) { delete _key; } }
+  MapList(int max) {  grow(max); }
+  MapList() {   }
+  MapList(boolean isMap) {  _isMap=isMap;  } // enable as map
+  ~MapList() { delete _array; if(_isMap) { delete _key; } }
 
 };
 
-List attrMap(true); 
+MapList attrMap(true); 
 
 //-----------------------------------------------------------------------------
 
@@ -456,12 +456,13 @@ boolean ntpRunning=false;           // is ntpServer running
     nextTime=2 => OFF
     nextTime=0 => off, nextTime=executeTime
  period= next period in ms
+    period=-1 (one time, but off after)
  e.g.
     unsigned long *wifiTime = new unsigned long(0);
     if (isTimer(wifiTime, 1000)) {....}
 */
 boolean isTimer(unsigned long *lastTime, unsigned long period) {
-  if(*lastTime==2) { return false; } // lastTime=2 => OFF
+  if(*lastTime==2 ) { return false; } // lastTime=2 => OFF
   else if(*lastTime==0) {  // do now
     *lastTime=_timeMs; // 0= start now
     if(*lastTime>=0 && *lastTime<2) { *lastTime=3; }
@@ -470,7 +471,7 @@ boolean isTimer(unsigned long *lastTime, unsigned long period) {
     *lastTime=_timeMs; // 1= start next period
     if(*lastTime>=0 && *lastTime<2) { *lastTime=3; }
     return false;  
-  }else if (_timeMs >= *lastTime+period) {  // next period found
+  }else if (period!=-1 && _timeMs >= *lastTime+period) {  // next period found
     *lastTime = _timeMs; 
       if(*lastTime>=0 && *lastTime<2) { *lastTime=3; }
     return true;
@@ -514,7 +515,7 @@ char* timeInfo() {
 //  e.g. EventTimer *myTimer=new EventTimer(10000,2000,&info); myTimer->start();  // after 10s excute info() and repeat every 2s
 //
 
-List eventList;
+MapList eventList;
 
 class MyEventTimer {
   private:
