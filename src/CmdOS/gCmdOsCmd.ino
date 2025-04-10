@@ -599,7 +599,7 @@ char* cmdFile(char* p0) {
 
 /* call http/rest and execute return body as cmd */
 char* cmdRest(char *url) {
-  char* ret=rest(String(url));  
+  char* ret=rest(toString(url));  
   if(!is(ret)) { return NULL; } 
   sprintf(buffer,"cmdRest %s",ret); logPrintln(LOG_DEBUG,buffer);
   return cmdPrg(ret);

@@ -1,5 +1,12 @@
 
-#include <WiFi.h>
+#ifdef ESP32
+  #include <WiFi.h>
+#elif defined(ESP8266)
+  #include <ESP8266WiFi.h>
+#elif defined(TARGET_RP2040)
+  #include <WiFi.h>
+#endif
+
 #include <EEPROM.h>       // EEprom read/write
 
 #include <time.h>         // time 
@@ -364,6 +371,7 @@ char* to(const char *a, const char *b,const char *c,const char *d,const char *e)
 
 /* convert cahr* to string */
 String toString(const char *text) {  if(!is(text)) { return EMPTYSTRING; } return String(text); }
+String toString(char *text) {  if(!is(text)) { return EMPTYSTRING; } return String(text); }
 
 boolean toBoolean(int i) { return i>0; }
 /* convert char* to boolean */
@@ -419,9 +427,13 @@ void espRestart(char* message) {
 
 /* espChip ID */
 uint32_t espChipId() {
+  #ifdef ESP32
     uint32_t chipId=0;
     for (int i = 0; i < 17; i = i + 8) { chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;}
     return chipId;
+  #elif defined(ESP8266)
+    return ESP.getChipId();
+  #endif
 }
 
 /* esp info */
@@ -642,12 +654,15 @@ char* setLogLevel(int level) {
 //-----------------------------------------------------------------------------
 // SPIFFS
 
-#if enableFs
-  #include <SPIFFS.h>
-  #ifdef ESP32
+#if enableFs    
+  #ifdef ESP32  
+    #include <SPIFFS.h>  
     #define FILESYSTEM SPIFFS
   #elif defined(ESP8266)
-    #define FILESYSTEM U_FS
+//    #include <SPIFFS.h>
+//    #define FILESYSTEM U_FS
+    #include <LittleFS.h>  
+    #define FILESYSTEM LittleFS
   #endif
 
   String rootDir="/";
@@ -673,7 +688,7 @@ char* setLogLevel(int level) {
   boolean fsWrite(String file,char *p1) { 
     if(!is(file)) { return false; }
     else if(!file.startsWith(rootDir)) { file=rootDir+file; }
-    File ff = FILESYSTEM.open(file, FILE_WRITE);
+    File ff = FILESYSTEM.open(file, "w");
     if(!ff){ return false; }
     int len=strlen(p1);
     if(p1!=NULL && len>0) { ff.print(p1); }
@@ -686,7 +701,7 @@ char* setLogLevel(int level) {
   boolean fsWriteBin(String file,uint8_t *p1,int len) { 
     if(!is(file)) { return false; }
     else if(!file.startsWith(rootDir)) { file=rootDir+file; }    
-    File ff = FILESYSTEM.open(file, FILE_WRITE);
+    File ff = FILESYSTEM.open(file, "w");
     if(!ff){ return false; }
     ff.write(p1,len);
     ff.close();
@@ -703,7 +718,7 @@ char* setLogLevel(int level) {
   char* fsRead(String file) {  
     if(!is(file)) { return NULL; }
     else if(!file.startsWith(rootDir)) { file=rootDir+file; }
-    File ff = FILESYSTEM.open(file, FILE_READ);  
+    File ff = FILESYSTEM.open(file, "r");  
     if(ff==NULL) { sprintf(buffer,"fsRead unkown '%s'",file.c_str());logPrintln(LOG_INFO,buffer);   return NULL; } 
     size_t fileSize= ff.size();
 
@@ -725,7 +740,7 @@ char* setLogLevel(int level) {
   uint8_t* fsReadBin(String file, size_t& fileSize) {
     if(!is(file)) { return NULL; }
     else if(!file.startsWith(rootDir)) { file=rootDir+file; }
-    File ff = FILESYSTEM.open(file, FILE_READ);  
+    File ff = FILESYSTEM.open(file, "r");  
     if(ff==NULL) { sprintf(buffer,"fsReadBin unkown '%s'",file.c_str());logPrintln(LOG_INFO,buffer);   return NULL; } 
     fileSize= ff.size();
 
@@ -741,7 +756,7 @@ char* setLogLevel(int level) {
   int fsSize(String file) { 
     if(!is(file)) { return -1; }
     else if(!file.startsWith(rootDir)) { file=rootDir+file; }
-    File ff = FILESYSTEM.open(file);
+    File ff = FILESYSTEM.open(file,"r");
     if(ff==NULL) { logPrintln(LOG_INFO,"missing"); return -1; } 
     int len=ff.size();
     ff.close();
@@ -752,7 +767,7 @@ char* setLogLevel(int level) {
   void fsCat(String file) { 
     if(!is(file)) { return ; }
     else if(!file.startsWith(rootDir)) { file=rootDir+file; }
-    File ff = FILESYSTEM.open(file, FILE_READ);
+    File ff = FILESYSTEM.open(file, "r");
     if(ff==NULL) { logPrintln(LOG_INFO,"missing");  } 
     char buffer[50];
     while (ff.available()) {
@@ -768,7 +783,7 @@ char* setLogLevel(int level) {
   char* fsDir(String find) {
     if(!isAccess(ACCESS_READ))  { return "NO ACCESS fsDir"; }
     sprintf(buffer,"Files:\n");
-    File root = FILESYSTEM.open(rootDir);
+    File root = FILESYSTEM.open(rootDir,"r");
     File foundfile = root.openNextFile();
     while (foundfile) {
       String file=foundfile.name();
@@ -785,7 +800,7 @@ char* setLogLevel(int level) {
   /* list number of files in SPIFFS of dir (null=/) */
   int fsDirSize(String find) {
     int count=0;
-    File root = FILESYSTEM.open(rootDir);
+    File root = FILESYSTEM.open(rootDir,"r");
     File foundfile = root.openNextFile();
     while (foundfile) {
       String file=foundfile.name();
@@ -802,7 +817,7 @@ char* setLogLevel(int level) {
       type=1 => size of file
   */
   char* fsFile(String find,int count,int type) {
-    File root = FILESYSTEM.open(rootDir);
+    File root = FILESYSTEM.open(rootDir,"r");
     File foundfile = root.openNextFile();
     while (foundfile) {
       String file=foundfile.name();
@@ -829,6 +844,7 @@ char* setLogLevel(int level) {
 
   #if netEnable
 
+//TODO HTTPClient for 8266
     #include <HTTPClient.h>
     #include <WiFiClient.h>
 
@@ -849,7 +865,7 @@ char* setLogLevel(int level) {
       uint8_t buff[128] PROGMEM = {0};
       if (httpCode == 200) {
         sprintf(buffer,"fs downloading '%s' size %d to '%s'", url.c_str(), size,name.c_str());logPrintln(LOG_INFO,buffer);
-        File ff = FILESYSTEM.open(name, FILE_WRITE); 
+        File ff = FILESYSTEM.open(name, "w"); 
         http.writeToStream(&ff);
         ff.close();
 
@@ -889,8 +905,8 @@ char* setLogLevel(int level) {
     }
 
   #else 
-    String fsDownload(String url,String name) { return EMPTY; }
-    String rest(String url) { return EMPTY; }  
+    char* fsDownload(String url,String name) { return EMPTY; }
+    char* rest(String url) { return EMPTY; }  
   #endif
 
 
@@ -906,14 +922,21 @@ String fsToSize(const size_t bytes) {
 /* filesystem setup */
 void fsSetup() {
   if(!enableFs) { return ; }
-  if (!FILESYSTEM.begin(true)) {    // if you have not used SPIFFS before on a ESP32, it will show this error. after a reboot SPIFFS will be configured and will happily work.
-    espRestart("SPIFFS ERROR: Cannot mount SPIFFS");
-  }
+  #ifdef ESP32
+    if (!FILESYSTEM.begin(true)) {    // if you have not used SPIFFS before on a ESP32, it will show this error. after a reboot SPIFFS will be configured and will happily work.
+      espRestart("FILESYSTEM ERROR: Cannot mount");
+    }
+  #endif
   if(!FILESYSTEM.begin()){
-    logPrintln(LOG_SYSTEM,"SPIFFS Mount Failed");
+    logPrintln(LOG_SYSTEM,"FILESYSTEM Mount Failed");
   } else {
-    sprintf(buffer,"SPIFFS Free:%s Used:%s Total:%s",
-      fsToSize((FILESYSTEM.totalBytes() - FILESYSTEM.usedBytes())),fsToSize(FILESYSTEM.usedBytes()),fsToSize(FILESYSTEM.totalBytes()));logPrintln(LOG_INFO,buffer);
+    #ifdef ESP32
+      sprintf(buffer,"SPIFFS Free:%s Used:%s Total:%s",
+        fsToSize((FILESYSTEM.totalBytes() - FILESYSTEM.usedBytes())),fsToSize(FILESYSTEM.usedBytes()),fsToSize(FILESYSTEM.totalBytes()));logPrintln(LOG_INFO,buffer);
+    #else
+//TODO show nonne spiff fs ?     
+      sprintf(buffer,"FS");logPrintln(LOG_INFO,buffer);
+    #endif
   }
 }
 

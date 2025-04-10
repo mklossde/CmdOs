@@ -21,18 +21,19 @@ byte MODE_DEFAULT=21; // normal=21=MODE_WIFI_CL_TRY /
 boolean serialEnable=true; // enable/disbale serial in/out
 
 boolean wifiEnable=true;  // enable/disbale wifi
-boolean ntpEnable=true; // enable time server
+//boolean ntpEnable=false; // enable time server
 boolean webEnable=true;    // enable/disbale http server
 boolean mdnsEnable=true;   // enable/disable mDNS detection 
 boolean bootSafe=true;    // enable/disbale boot safe
 
+#define ntpEnable false     // enable time server
 #define enableFs true         // enable fs / SPIFFS
 
-#define netEnable true       // enable/disbale network ping/dns/HttpCLient 
-#define webSerialEnable true // enable/disbale web serial
+#define netEnable false       // enable/disbale network ping/dns/HttpCLient 
+#define webSerialEnable false // enable/disbale web serial
 #define mqttEnable false      // enable/disbale mqtt
 
-#define otaEnable true        // enabled/disbale ota update 
+#define otaEnable false        // enabled/disbale ota update 
 #define updateEnable true     // enabled/disbale update firmware via web 
 
 #define ledEnable false       // enable/disbale serial

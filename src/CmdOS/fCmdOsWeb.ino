@@ -1,17 +1,13 @@
 
 #include <Arduino.h>
 #ifdef ESP32
+//  #include <WiFi.h>  
   #include <AsyncTCP.h>
-  #include <WiFi.h>  
   #include <ESPmDNS.h>
-  
-
 #elif defined(ESP8266)
-  #include <ESP8266WiFi.h>
+//  #include <ESP8266WiFi.h>
   #include <ESPAsyncTCP.h>
-  
   #include <ESP8266mDNS.h>
-  
 #endif
 
 
@@ -123,7 +119,7 @@ void webFileManagerEd(AsyncWebServerRequest *request, String name) {
   html = pageHead(html, "File Manager - Ed");
   html += "<form method='GET' action='?doSave=1'><input type='text' name='name' value='" + name + "'/><br>";
   html += "<textarea label='" + name + "' name='value' cols='80' rows='40'>";
-  File ff = SPIFFS.open(name, FILE_READ);
+  File ff = SPIFFS.open(name, "r");
   if (ff) { html += ff.readString(); }
   ff.close();
   html += "</textarea><br><input type='submit' name='doSave' value='save'>";
@@ -136,7 +132,7 @@ void webFileManagerEd(AsyncWebServerRequest *request, String name) {
 void webFileManagerSave(AsyncWebServerRequest *request, String name, String value) {  
   if(!isWebAccess(ACCESS_CHANGE)) { request->send(403, "text/html"); }
   
-  File ff = SPIFFS.open(name, FILE_WRITE);
+  File ff = SPIFFS.open(name, "w");
   if (value != NULL) { ff.print(value); }
   ff.close();
   sprintf(buffer, "save %s", name.c_str()); logPrintln(LOG_INFO,buffer);
@@ -151,9 +147,9 @@ void webFileManagerUpload(AsyncWebServerRequest *request, String file, size_t in
   File ff;
   if (!index) {
     FILESYSTEM.remove(rootDir + file); // remove old file 
-    ff = SPIFFS.open(rootDir + file, FILE_WRITE);
+    ff = SPIFFS.open(rootDir + file, "w");
   } else {
-    ff = SPIFFS.open(rootDir + file, FILE_APPEND);
+    ff = SPIFFS.open(rootDir + file, "a");
   }
 
   for (size_t i = 0; i < len; i++) { ff.write(data[i]); }
@@ -181,7 +177,7 @@ void webFileManager(AsyncWebServerRequest *request) {
   String html = "";
   html = pageHead(html, "File Manager");
   html += "[<a href='?ed=1&name=/new'>new</a>]<p>";
-  File root = SPIFFS.open(rootDir);
+  File root = FILESYSTEM.open(rootDir,"r");
   File foundfile = root.openNextFile();
   while (foundfile) {
     String name = String(foundfile.name());
@@ -231,15 +227,18 @@ void webFileManager(AsyncWebServerRequest *request) {
     if (!index) {
       logPrintln(LOG_SYSTEM,"Update");
       content_len = request->contentLength();
-      int cmd = (filename.indexOf("spiffs") > -1) ? U_SPIFFS  : U_FLASH;  // if filename includes spiffs, update the spiffs partition
-  #ifdef ESP8266
-      Update.runAsync(true);
-      if (!Update.begin(content_len, cmd)) {
-  #else
-      if (!Update.begin(UPDATE_SIZE_UNKNOWN, cmd)) {
-  #endif
-        Update.printError(Serial);
-      }
+      #ifdef ESP8266
+        Update.runAsync(true);
+        if (filename.indexOf("filesystem") > -1) {            
+          if (!Update.begin(content_len, U_FS)) { Update.printError(Serial); }
+        }else {
+          uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+          if (!Update.begin(maxSketchSpace, U_FLASH)) { Update.printError(Serial); }
+        }
+      #else
+        int cmd = (filename.indexOf("spiffs") > -1) ? U_SPIFFS  : U_FLASH;  // if filename includes spiffs, update the spiffs partition
+        if (!Update.begin(UPDATE_SIZE_UNKNOWN, cmd)) { Update.printError(Serial); }
+      #endif
     }
 
     if (Update.write(data, len) != len) {
@@ -278,6 +277,7 @@ void webFileManager(AsyncWebServerRequest *request) {
 // web serial console
 
 #if webSerialEnable
+//TODO AsyncWebSerial fro esp8266
   #include <AsyncWebSerial.h>
   String path_console = "/webserial";
   AsyncWebSerial webSerial;

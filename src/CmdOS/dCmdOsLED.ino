@@ -240,7 +240,11 @@ public:
   // read button
   byte swRead() {
     if (_swMode == SW_MODE_TOUCH) {
-      return touchRead(_swGpio);
+      #ifdef ESP32
+        return touchRead(_swGpio);
+      #else 
+        return digitalRead(_swGpio);
+      #endif 
     } else {
       return digitalRead(_swGpio);
     }
@@ -308,11 +312,11 @@ public:
     swLast = !swOn;
     if (_swMode == SW_MODE_TOUCH) {
     }                                                                        //
-    else if (_swMode == SW_MODE_PULLUP) { pinMode(_swGpio, INPUT_PULLUP); }  // input with interal pullup ( _swGpio=GND (false) => pressed)
-    else if (_swMode == SW_MODE_PULLDOWN) {
-      pinMode(_swGpio, INPUT_PULLDOWN);
-    }  // input with interal pulldown
-    else { pinMode(_swGpio, INPUT); }
+    else if (_swMode == SW_MODE_PULLUP) { pinMode(_swGpio, INPUT_PULLUP);   // input with interal pullup ( _swGpio=GND (false) => pressed)
+    #ifdef ESP32
+      }else if (_swMode == SW_MODE_PULLDOWN) { pinMode(_swGpio, INPUT_PULLDOWN); // input with interal pulldown
+    #endif
+    }  else { pinMode(_swGpio, INPUT); }
     if (_swOn == 2) {
       byte swNow = swRead();
       if (swNow == 0) {

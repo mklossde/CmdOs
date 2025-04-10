@@ -2,10 +2,10 @@
  * Wifi
  */
  
-#include <WiFi.h>
+//#include <WiFi.h>
 #include <DNSServer.h>
 
-#include <esp_sntp.h> // time
+//TODO #include <esp_sntp.h> // time
 #include <time.h>     // time
 
 #ifdef ESP32
@@ -294,6 +294,7 @@ void mdnsSetup() {
 //-------------------------------------------------------------------------------------------------------------------
 // Wifi
 
+/*
 #ifdef ESP32
   #include <WiFi.h>
 #elif defined(ESP8266)
@@ -301,7 +302,7 @@ void mdnsSetup() {
 #elif defined(TARGET_RP2040)
   #include <WiFi.h>
 #endif
-
+*/
 
 void webSetup();
 
@@ -323,37 +324,42 @@ char* wifiScan() {
 //-------------------------------------------------------------------------------------------------------------------
 // time
 
-//const char* const PROGMEM NTP_SERVER[] = {"fritz.box", "de.pool.ntp.org", "at.pool.ntp.org", "ch.pool.ntp.org", "ptbtime1.ptb.de", "europe.pool.ntp.org"};
-//const char *NTP_TZ    = "CET-1CEST,M3.5.0,M10.5.0/3";
-#define timezone "CET-1CEST,M3.5.0/02,M10.5.0/03" // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+#if ntpEnable
+  //const char* const PROGMEM NTP_SERVER[] = {"fritz.box", "de.pool.ntp.org", "at.pool.ntp.org", "ch.pool.ntp.org", "ptbtime1.ptb.de", "europe.pool.ntp.org"};
+  //const char *NTP_TZ    = "CET-1CEST,M3.5.0,M10.5.0/3";
+  #define timezone "CET-1CEST,M3.5.0/02,M10.5.0/03" // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
 
-// callback when ntp time is given
-void ntpSet(struct timeval *tv) {
-  time(&timeNow);                    // read the current time
-  localtime_r(&timeNow, &tm);           // update the structure tm with the current time
-  sprintf(buffer,"NTP set %d",timeNow); logPrintln(LOG_INFO,buffer);
-  ntpRunning=true;
-}
-
-/* ntp/timeserver config */
-void ntpSetup() {
-//  esp_sntp_servermode_dhcp(1);  // (optional)
-
-  if(is(eeBoot.wifi_ntp,1,32)) { 
-    ntpServer=eeBoot.wifi_ntp;     
-  }else { 
-    String gw=WiFi.gatewayIP().toString();
-    ntpServer = copy((char*)gw.c_str());
+  // callback when ntp time is given
+  void ntpSet(struct timeval *tv) {
+    time(&timeNow);                    // read the current time
+    localtime_r(&timeNow, &tm);           // update the structure tm with the current time
+    sprintf(buffer,"NTP set %d",timeNow); logPrintln(LOG_INFO,buffer);
+    ntpRunning=true;
   }
-  
-  if(ntpServer==NULL) {  logPrintln(LOG_ERROR,"ntp server missing");  return ; }
 
-  int gtm_timezone_offset=0; // gmt+ or gmt-
-  int dst=0; // 0=winter-time / 1=summer-time
-  sprintf(buffer,"NTP start '%s' gtm_timezone_offset:%d dst:%d",ntpServer,gtm_timezone_offset,dst); logPrintln(LOG_INFO,buffer); 
-  configTime(gtm_timezone_offset * 3600, dst*3600, ntpServer); //ntpServer
-  sntp_set_time_sync_notification_cb(ntpSet); // callback on ntp time set
-}
+  /* ntp/timeserver config */
+  void ntpSetup() {
+  //  esp_sntp_servermode_dhcp(1);  // (optional)
+
+    if(is(eeBoot.wifi_ntp,1,32)) { 
+      ntpServer=eeBoot.wifi_ntp;     
+    }else { 
+      String gw=WiFi.gatewayIP().toString();
+      ntpServer = copy((char*)gw.c_str());
+    }
+    
+    if(ntpServer==NULL) {  logPrintln(LOG_ERROR,"ntp server missing");  return ; }
+
+    int gtm_timezone_offset=0; // gmt+ or gmt-
+    int dst=0; // 0=winter-time / 1=summer-time
+    sprintf(buffer,"NTP start '%s' gtm_timezone_offset:%d dst:%d",ntpServer,gtm_timezone_offset,dst); logPrintln(LOG_INFO,buffer); 
+    configTime(gtm_timezone_offset * 3600, dst*3600, ntpServer); //ntpServer
+  //TODO sntp_set_time_sync_notification_cb fgro 8266 
+    sntp_set_time_sync_notification_cb(ntpSet); // callback on ntp time set
+  }
+#else 
+  void ntpSetup() { } 
+#endif
 
 /* set time and timeServer [ADMIN] */
 char* timeSet(char* time,char* timeServer) {
@@ -380,13 +386,22 @@ char* timeSet(char* time,char* timeServer) {
 
   /* dns resolve ip/host to ip (e.g. char* name=netDns("192.168.1.1"); */
   char* netDns(char *ipStr) {
-      WiFi.hostByName(ipStr, pingIP);  
+      #ifdef ESP32
+        WiFi.hostByName(ipStr, pingIP);  
+      #elif defined(ESP8266)
+        ESP8266WiFi.hostByName(ipStr, pingIP);  
+      #endif
       sprintf(buffer,"%s",pingIP.toString().c_str()); return buffer;
   }
 
   /* ping given ip/host and return info (e.g. char* info=cmdPing("192.168.1.1"); ) */
   char* cmdPing(char *ipStr) { 
-    WiFi.hostByName(ipStr, pingIP);  
+    #ifdef ESP32
+      WiFi.hostByName(ipStr, pingIP);  
+    #elif defined(ESP8266)
+      ESP8266WiFi.hostByName(ipStr, pingIP);   
+    #endif
+
     int time=-1;
     if(Ping.ping(pingIP,1)) { time=Ping.minTime(); } 
     sprintf(buffer,"PING %s=%s time:%d",ipStr,pingIP.toString().c_str(),time); return buffer;
@@ -767,6 +782,7 @@ void wifiStart(boolean on) {
 //-------------------------------------------------------------
 
 #if otaEnable
+//TODO NetworkUdp for esp8266
   #include <NetworkUdp.h>
   #include <ArduinoOTA.h>
 
