@@ -11,7 +11,7 @@ const char* user_admin = "admin"; // default user
 char user_pas[]="admin";   // default espPas
 
 const char *wifi_ssid_default = ""; //PRIVAT_WIFI_SSID; // PRIVAT_WIFI_SSID via #include <privatdata.h>
-const char *wifi_pas_default = ""; //PRIVAT_WIFI_PAS;   // PRIVAT_WIFI_PAS via #include <privatdata.h>
+const char *wifi_pas_default = ""; // PRIVAT_WIFI_PAS;   // PRIVAT_WIFI_PAS via #include <privatdata.h>
 const char *mqtt_default = ""; //PRIVAT_MQTTSERVER;     // PRIVAT_MQTTSERVER via #include <privatdata.h>
 
 byte MODE_DEFAULT=21; // normal=21=MODE_WIFI_CL_TRY /
@@ -21,7 +21,6 @@ byte MODE_DEFAULT=21; // normal=21=MODE_WIFI_CL_TRY /
 boolean serialEnable=true; // enable/disbale serial in/out
 
 boolean wifiEnable=true;  // enable/disbale wifi
-//boolean ntpEnable=false; // enable time server
 boolean webEnable=true;    // enable/disbale http server
 boolean mdnsEnable=true;   // enable/disable mDNS detection 
 boolean bootSafe=true;    // enable/disbale boot safe
@@ -30,10 +29,10 @@ boolean bootSafe=true;    // enable/disbale boot safe
 #define enableFs true         // enable fs / SPIFFS
 
 #define netEnable false       // enable/disbale network ping/dns/HttpCLient 
-#define webSerialEnable false // enable/disbale web serial
+#define webSerialEnable true // enable/disbale web serial
 #define mqttEnable false      // enable/disbale mqtt
 
-#define otaEnable false        // enabled/disbale ota update 
+#define otaEnable true        // enabled/disbale ota update 
 #define updateEnable true     // enabled/disbale update firmware via web 
 
 #define ledEnable false       // enable/disbale serial

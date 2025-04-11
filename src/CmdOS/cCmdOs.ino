@@ -844,9 +844,12 @@ char* setLogLevel(int level) {
 
   #if netEnable
 
-//TODO HTTPClient for 8266
-    #include <HTTPClient.h>
     #include <WiFiClient.h>
+  #ifdef ESP32
+    #include <HTTPClient.h>
+  #elif defined(ESP8266)
+    #include <ESP8266HTTPClient.h>    
+  #endif
 
     // e.g. https://www.w3.org/Icons/64x64/home.gif
     char* fsDownload(String url,String name) {
@@ -856,13 +859,19 @@ char* setLogLevel(int level) {
       if(name==NULL) { name=url.substring(url.lastIndexOf('/')); }
       if(!name.startsWith("/")) { name="/"+name; }
 
-      http.begin(url); 
+      #ifdef ESP32
+        http.begin(url); 
+      #elif defined(ESP8266)
+        WiFiClient client;
+        http.begin(client,url); 
+      #endif      
+      
       int httpCode = http.GET();
       int size = http.getSize();
       if(size>MAX_DONWLOAD_SIZE) { http.end(); return "download maxSize error"; }
 
       FILESYSTEM.remove(name);  // remove old file
-      uint8_t buff[128] PROGMEM = {0};
+//      uint8_t buff[128] PROGMEM = {0};
       if (httpCode == 200) {
         sprintf(buffer,"fs downloading '%s' size %d to '%s'", url.c_str(), size,name.c_str());logPrintln(LOG_INFO,buffer);
         File ff = FILESYSTEM.open(name, "w"); 
@@ -886,7 +895,12 @@ char* setLogLevel(int level) {
       if(!is(url,0,250)) { return "missing url"; }
 
       HTTPClient http;
-      http.begin(url); 
+      #ifdef ESP32
+        http.begin(url); 
+      #elif defined(ESP8266)
+        WiFiClient client;
+        http.begin(client,url); 
+      #endif    
       int httpCode = http.GET();
 
       if (httpCode == 200) {

@@ -38,8 +38,8 @@ typedef struct {
 eeBoot_t eeBoot;    // bootloader data 
 
 
-#define MAX_NO_WIFI 30 // Max time 60s no wifi
-#define MAX_NO_SETUP 10 // Max time 60s no wifi
+#define MAX_NO_WIFI 120 // Max time 2min no wifi
+#define MAX_NO_SETUP 20 // Max time 60s no wifi
 unsigned long *wifiTime = new unsigned long(0);
 
 #define WIFI_CON_OFF 0
@@ -389,7 +389,7 @@ char* timeSet(char* time,char* timeServer) {
       #ifdef ESP32
         WiFi.hostByName(ipStr, pingIP);  
       #elif defined(ESP8266)
-        ESP8266WiFi.hostByName(ipStr, pingIP);  
+        WiFi.hostByName(ipStr, pingIP);  
       #endif
       sprintf(buffer,"%s",pingIP.toString().c_str()); return buffer;
   }
@@ -399,7 +399,7 @@ char* timeSet(char* time,char* timeServer) {
     #ifdef ESP32
       WiFi.hostByName(ipStr, pingIP);  
     #elif defined(ESP8266)
-      ESP8266WiFi.hostByName(ipStr, pingIP);   
+      WiFi.hostByName(ipStr, pingIP);   
     #endif
 
     int time=-1;
@@ -782,44 +782,55 @@ void wifiStart(boolean on) {
 //-------------------------------------------------------------
 
 #if otaEnable
-//TODO NetworkUdp for esp8266
+/*
+#ifdef ESP32
   #include <NetworkUdp.h>
-  #include <ArduinoOTA.h>
+#elif defined(ESP8266)
+  #include <WIFIUdp.h>
+#endif
+*/
+
+#include <ArduinoOTA.h>
 
 void otaSetup() {
-  ArduinoOTA
-    .onStart([]() {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH) { type = "sketch"; }
-      else {  type = "filesystem"; } // U_SPIFFS
-//      FILESYSTEM.end();
-      logPrintln(LOG_INFO,"Start updating " + type);
-    })
-    .onEnd([]() { logPrintln(LOG_INFO,"End");})
-    .onProgress([](unsigned int progress, unsigned int total) { sprintf(buffer,"Progress: %u%%", (progress / (total / 100))); logPrintln(LOG_INFO,buffer); })
-    .onError([](ota_error_t error) {
-      sprintf(buffer,"Error[%u]: ", error); logPrintln(LOG_ERROR,buffer);
-      if (error == OTA_AUTH_ERROR) { logPrintln(LOG_INFO,"Auth Failed");
-      } else if (error == OTA_BEGIN_ERROR) { logPrintln(LOG_INFO,"Begin Failed");
-      } else if (error == OTA_CONNECT_ERROR) { logPrintln(LOG_INFO,"Connect Failed");
-      } else if (error == OTA_RECEIVE_ERROR) { logPrintln(LOG_INFO,"Receive Failed");
-      } else if (error == OTA_END_ERROR) { logPrintln(LOG_INFO,"End Failed");
-      }
-    });
+   
+ ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) { type = "sketch"; } else {   type = "filesystem"; }
+//      FILESYSTEM.end(); // NOTE: if updating FS this would be the place to unmount FS using FS.end()    
+    if(serialEnable) { Serial.println("Start updating " + type); }
+  });
+  ArduinoOTA.onEnd([]() {
+    if(serialEnable) {  Serial.println("\nEnd"); }
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    if(serialEnable) {  Serial.printf("Progress: %u%%\r", (progress / (total / 100))); }
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    if(serialEnable) { 
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) { Serial.println("Auth Failed");
+      } else if (error == OTA_BEGIN_ERROR) { Serial.println("Begin Failed");
+      } else if (error == OTA_CONNECT_ERROR) { Serial.println("Connect Failed");
+      } else if (error == OTA_RECEIVE_ERROR) { Serial.println("Receive Failed");
+      } else if (error == OTA_END_ERROR) { Serial.println("End Failed"); }
+    }
+  });
 
   if(is(eeBoot.espName)) { ArduinoOTA.setHostname(eeBoot.espName); }
   if(is(eeBoot.espPas)) { ArduinoOTA.setPassword(eeBoot.espPas); logPrintln(LOG_INFO,"OTA setup ESPPAS"); }
   else { ArduinoOTA.setPassword("admin"); logPrintln(LOG_INFO,"OTA setup admin");  }
-  
+
   ArduinoOTA.begin();
+  
 }
 
 void otaLoop() {
   ArduinoOTA.handle();
 }
 #else 
-void otaSetup() {}
-void otaLoop() {}
+  void otaSetup() {}
+  void otaLoop() {}
 #endif
 
 

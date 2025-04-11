@@ -277,27 +277,59 @@ void webFileManager(AsyncWebServerRequest *request) {
 // web serial console
 
 #if webSerialEnable
-//TODO AsyncWebSerial fro esp8266
+
+/*
+//TODO AsyncWebSerial for esp8266
   #include <AsyncWebSerial.h>
   String path_console = "/webserial";
   AsyncWebSerial webSerial;
-
-  /* recevie webSerial */
   void webSerialReceive(uint8_t *data, size_t len) {
     String line = "";
     for (int i = 0; i < len; i++) { line += char(data[i]); }
     char ca[len + 1];
     for (int i = 0; i < len; i++) { ca[i] = data[i]; }
     ca[len] = '\0';
-    String ret = cmdLine(ca);  // exec cmd
+    char* ret = cmdLine(ca);  // exec cmd
   }
 
-  /* write log to webSerial */
   void webLogLn(String msg) {
     if (webEnable && _webInit) { webSerial.println(msg); }
   }
 
+  void webSerialSetup() {
+    webSerial.onMessage(webSerialReceive);  // exec cmd
+    webSerial.begin(&server);
+    if (is(eeBoot.espPas)) { webSerial.setAuthentication(user_admin, eeBoot.espPas); }  // webSerial auth
+    sprintf(buffer, "WebSerial started %s", path_console.c_str()); logPrintln(LOG_DEBUG,buffer);
+  }
+
+*/
+
+  #include <WebSerialLite.h>
+
+  void recvMsg(uint8_t *data, size_t len){
+    String line = "";
+    for (int i = 0; i < len; i++) { line += char(data[i]); }
+    char ca[len + 1];
+    for (int i = 0; i < len; i++) { ca[i] = data[i]; }
+    ca[len] = '\0';
+    char* ret = cmdLine(ca);  // exec cmd
+    if(is(ret)) { webLogLn(toString(ret)); }
+  }
+
+  void webLogLn(String msg) {
+    if (webEnable && _webInit) { WebSerial.println(msg); }
+  }
+
+  void webSerialSetup() {
+    WebSerial.begin(&server);
+    WebSerial.onMessage(recvMsg);
+//TODO    if (is(eeBoot.espPas)) { WebSerial.setAuthentication(user_admin, eeBoot.espPas); }  // webSerial auth
+    sprintf(buffer, "WebSerial started /webserial"); logPrintln(LOG_DEBUG,buffer);
+  }
+
 #else
+  void webSerialSetup() {}
   void webLogLn(String msg) {}
 #endif
 
@@ -465,10 +497,7 @@ void webSetup() {
 
   #if webSerialEnable
     // web serial console
-    webSerial.onMessage(webSerialReceive);  // exec cmd
-    webSerial.begin(&server);
-    if (is(eeBoot.espPas)) { webSerial.setAuthentication(user_admin, eeBoot.espPas); }  // webSerial auth
-    sprintf(buffer, "WebSerial started %s", path_console.c_str()); logPrintln(LOG_DEBUG,buffer);
+    webSerialSetup();
   #endif
 
   // OTA
@@ -531,6 +560,7 @@ void webSetup() {
   // app
   webApp();
 
+
   server.begin();
 
 
@@ -541,7 +571,9 @@ void webSetup() {
 void webLoop() {
   #if webSerialEnable
     if (webEnable && _webInit) {
+/*
       webSerial.loop();
+*/      
     }
   #endif
 }

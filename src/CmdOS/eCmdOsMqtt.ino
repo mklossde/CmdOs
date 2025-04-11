@@ -22,7 +22,12 @@ char* mqttCmdTopic; // topic for cmd messages (e.g. device/esp/EspBoot00DC9235/c
 char* mqttResponseTopic; // topic for resposne of cmd messages (e.g. device/esp/EspBoot00DC9235/result) 
 
 WiFiClient *mqttWifiClient=NULL;
-NetworkClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
+#ifdef ESP32
+  NetworkClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
+#elif defined(ESP8266)
+  WiFiClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
+#endif   
+
 PubSubClient *mqttClient=NULL;
 
 static char* mqttTopic=new char[64]; // buffer of topic
@@ -170,7 +175,11 @@ void mqttInit() {
     mqttWifiClient=new WiFiClient();  
     mqttClient=new PubSubClient(*mqttWifiClient);
   }else {
-    mqttClientSSL=new NetworkClientSecure();  
+    #ifdef ESP32
+      mqttClientSSL=new NetworkClientSecure();  
+    #elif defined(ESP8266)
+      mqttClientSSL=new WiFiClientSecure();  
+    #endif    
     mqttClient=new PubSubClient(*mqttClientSSL);
   }  
 
