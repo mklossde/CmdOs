@@ -5,7 +5,7 @@ develop by mk@almi.de
 
 ![CmdOS LOGO](images/CmdOS.gif)
 
-**CmdOS is a command based operation system for the ESP32.**
+**CmdOS is a command based operation system for the ESP32 and ESP8266.**
 
 
 ## Cmd 

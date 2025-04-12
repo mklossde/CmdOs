@@ -5,7 +5,13 @@
 //#include <WiFi.h>
 #include <DNSServer.h>
 
-//TODO #include <esp_sntp.h> // time
+#ifdef ESP32
+//  #include <esp_sntp.h> // time
+#else
+  #include <sys/time.h>  // struct timeval
+//  #include <coredecls.h>  // ! optional settimeofday_cb() callback to check on server
+#endif
+
 #include <time.h>     // time
 
 #ifdef ESP32
@@ -337,6 +343,13 @@ char* wifiScan() {
     ntpRunning=true;
   }
 
+  void ntpSet2(bool from_sntp) {
+    time(&timeNow);                    // read the current time
+    localtime_r(&timeNow, &tm);           // update the structure tm with the current time
+    sprintf(buffer,"NTP set %d",timeNow); logPrintln(LOG_INFO,buffer);
+    ntpRunning=true;    
+  }
+
   /* ntp/timeserver config */
   void ntpSetup() {
   //  esp_sntp_servermode_dhcp(1);  // (optional)
@@ -354,8 +367,12 @@ char* wifiScan() {
     int dst=0; // 0=winter-time / 1=summer-time
     sprintf(buffer,"NTP start '%s' gtm_timezone_offset:%d dst:%d",ntpServer,gtm_timezone_offset,dst); logPrintln(LOG_INFO,buffer); 
     configTime(gtm_timezone_offset * 3600, dst*3600, ntpServer); //ntpServer
-  //TODO sntp_set_time_sync_notification_cb fgro 8266 
-    sntp_set_time_sync_notification_cb(ntpSet); // callback on ntp time set
+      
+    #ifdef ESP32
+      sntp_set_time_sync_notification_cb(ntpSet); // callback on ntp time set
+    #else
+      settimeofday_cb(ntpSet2); // callback on ntp time set
+    #endif
   }
 #else 
   void ntpSetup() { } 

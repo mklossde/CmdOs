@@ -13,7 +13,7 @@
 #include <sys/time.h>     // time
 
 /* cmdOS from openON.org develop by mk@almi.de */
-const char *cmdOS="V.0.2.5";
+const char *cmdOS="V.0.3.0";
 char *APP_NAME_PREFIX="CmdOs";
  
 String appIP="";
@@ -757,7 +757,7 @@ char* setLogLevel(int level) {
     if(!is(file)) { return -1; }
     else if(!file.startsWith(rootDir)) { file=rootDir+file; }
     File ff = FILESYSTEM.open(file,"r");
-    if(ff==NULL) { logPrintln(LOG_INFO,"missing"); return -1; } 
+    if(ff==NULL) { sprintf(buffer,"missing fsSize %s",file.c_str());logPrintln(LOG_INFO,buffer); return -1; } 
     int len=ff.size();
     ff.close();
     return len;
