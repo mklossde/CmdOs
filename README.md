@@ -1,5 +1,5 @@
 
-# CmdOS V0.2.0 a OpenOn.org project
+# CmdOS V0.3.0 a OpenOn.org project
 
 develop by mk@almi.de
 
