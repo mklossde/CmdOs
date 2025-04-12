@@ -23,7 +23,7 @@ char* mqttResponseTopic; // topic for resposne of cmd messages (e.g. device/esp/
 
 WiFiClient *mqttWifiClient=NULL;
 #ifdef ESP32
-  NetworkClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
+  WiFiClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
 #elif defined(ESP8266)
   WiFiClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
 #endif   
@@ -176,7 +176,7 @@ void mqttInit() {
     mqttClient=new PubSubClient(*mqttWifiClient);
   }else {
     #ifdef ESP32
-      mqttClientSSL=new NetworkClientSecure();  
+      mqttClientSSL=new WiFiClientSecure();  
     #elif defined(ESP8266)
       mqttClientSSL=new WiFiClientSecure();  
     #endif    

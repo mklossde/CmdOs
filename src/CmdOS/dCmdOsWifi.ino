@@ -6,7 +6,7 @@
 #include <DNSServer.h>
 
 #ifdef ESP32
-//  #include <esp_sntp.h> // time
+  #include <esp_sntp.h> // time
 #else
   #include <sys/time.h>  // struct timeval
 //  #include <coredecls.h>  // ! optional settimeofday_cb() callback to check on server
