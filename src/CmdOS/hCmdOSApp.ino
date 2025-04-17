@@ -1,10 +1,12 @@
 
 
+
 void cmdOSSetup() {
   if(serialEnable) { 
     delay(1); Serial.begin(115200); 
     delay(1); Serial.println("----------------------------------------------------------------------------------------------------------------------");
   }
+  freeHeapMax=ESP.getFreeHeap(); // remeber max freeHeap
   eeSetup();
   ledSetup();  
   swSetup(); 

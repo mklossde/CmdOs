@@ -37,6 +37,6 @@ e.g. fsDownload https://www.w3.org/Icons/64x64/home.gif  => fill load url into f
 ## fsFormat 
 format filesystem	
 
-![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by michael@openon.org 
 
  

@@ -51,4 +51,4 @@ call "rest" will return a random numner. call "reset NUMBER" to rest all
 - Upload a File (+Drag and Drop)
 - Upload URL to File 
 
-![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by michael@openon.org 

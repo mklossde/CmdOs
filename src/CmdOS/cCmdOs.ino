@@ -1,4 +1,7 @@
 
+// CmdOS 
+// dev by OpenOn.org source from http://github.com/mklossde/CmdOS
+
 #ifdef ESP32
   #include <WiFi.h>
 #elif defined(ESP8266)
@@ -21,6 +24,8 @@ String appIP="";
 
 /* on init auto find wifi set_up (password set_up) and connect */
 #define wifi_setup "set_up"
+
+long freeHeapMax;
 
 //-----------------------------------------------------------------------------
 // new [] => delete[]
@@ -51,7 +56,8 @@ String appIP="";
 #define ACCESS_ADMIN 1 // admin function 
 #define ACCESS_CHANGE 2 // user function 
 #define ACCESS_READ 3 // info function 
-#define ACCESS_ALL 4 // general function
+#define ACCESS_USE 5 // user function 
+#define ACCESS_ALL 10 // general function
 
 /* log Level */
 #define LOG_SYSTEM 0
@@ -189,16 +195,17 @@ public:
   /* get obejct at index e.g. char* value=(char*)list.get(0); */
   void* get(int index) { if(index>=0 && index<_index) { return _array[index]; } else { return NULL; } }  
   /* del object at index e.g. char* old=(char*)list.del(0); */
-  void del(int index) {   
-    if(index<0 || index>=_index) {return ; }      
+  boolean del(int index) {   
+    if(index<0 || index>=_index) {return false; }      
     void *obj=_array[index]; if(obj!=NULL) { delete obj; } 
     if(_isMap) { void *oldKey=_key[index]; if(oldKey!=NULL) { delete oldKey; } }        
-    for(int i=_index-2;i>=index;i--) { 
+    for(int i=index;i<_index-1;i++) { 
       _array[i]=_array[i+1]; 
       if(_isMap) { _key[i]=_key[i+1]; }
       _vsize[i]=_vsize[i+1];
     } 
-    _index--;      
+    _index--; 
+    return true;    
   }
   /* clear all (without prefix) / clear with prefix (e.g. clear my ) */
   void clear(char *prefix) { for(int i=_index;i>=0;i--) { if(!is(prefix) || startWith(key(i),prefix)) { del(i); }} }

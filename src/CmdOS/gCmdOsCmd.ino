@@ -66,8 +66,6 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "?")) { ret=cmdInfo(); }
   else if(equals(cmd, "esp")) { ret=espInfo();  }// show esp status
   else if(equals(cmd, "stat")) { ret=appInfo(); }// show esp status
-
-  else if(equals(cmd, "freeHeap")) { sprintf(buffer,"%d",ESP.getFreeHeap());ret=buffer; }// show free heap
   
   else if(equals(cmd, "login")) { cmdLogin(cmdParam(param)); }
   else if(equals(cmd, "restart")) { espRestart("cmd restart");  }// restart
@@ -114,9 +112,9 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "dns")) {  ret=netDns(cmdParam(param)); }         // wifi dns resolve (e.g. "dns web.de")
    
   else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(cmdParam(param));   } // enable/disbale mqttLog
-  else if(equals(cmd,"mqttSend") && isAccess(ACCESS_CHANGE)) { publishTopic(cmdParam(param),cmdParam(param));  } // mqtt send topic MESSAGE
+  else if(equals(cmd,"mqttSend") && isAccess(ACCESS_USE)) { publishTopic(cmdParam(param),cmdParam(param));  } // mqtt send topic MESSAGE
   else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(cmdParam(param)));  }
-  else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_READ)) { mqttAttr(cmdParam(param),toBoolean(cmdParam(param)));  }
+  else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_USE)) { mqttAttr(cmdParam(param),toBoolean(cmdParam(param)));  }
   else if(equals(cmd, "mqtt")) { ret=mqttSet(cmdParam(param));  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833") 
 
   else if(equals(cmd, "run")) { ret=cmdFile(cmdParam(param)); } // run prg from file 
@@ -127,9 +125,9 @@ char* cmdExec(char *cmd, char **param) {
 //  else if(equals(cmd, "error")) { cmdError(cmdParam(param));  }// end prg with error
   else if(equals(cmd, "error")) { cmdError(paramToLine(*param));  }// end prg with error
 
-  else if(equals(cmd, "fsDir") && isAccess(ACCESS_READ)) { ret=fsDir(toString(cmdParam(param))); }
-  else if(equals(cmd, "fsDirSize") && isAccess(ACCESS_READ)) { int count=fsDirSize(toString(cmdParam(param))); sprintf(buffer,"%d",count); ret=buffer; }
-  else if(equals(cmd, "fsFile") && isAccess(ACCESS_READ)) { ret=fsFile(toString(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); }
+  else if(equals(cmd, "fsDir") && isAccess(ACCESS_USE)) { ret=fsDir(toString(cmdParam(param))); }
+  else if(equals(cmd, "fsDirSize") && isAccess(ACCESS_USE)) { int count=fsDirSize(toString(cmdParam(param))); sprintf(buffer,"%d",count); ret=buffer; }
+  else if(equals(cmd, "fsFile") && isAccess(ACCESS_USE)) { ret=fsFile(toString(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); }
   else if(equals(cmd, "fsCat") && isAccess(ACCESS_READ)) { fsCat(toString(cmdParam(param)));  }
   else if(equals(cmd, "fsWrite") && isAccess(ACCESS_CHANGE) ) { boolean ok=fsWrite(toString(cmdParam(param)),cmdParam(param)); }
   else if(equals(cmd, "fsDel") && isAccess(ACCESS_CHANGE)) { fsDelete(toString(cmdParam(param))); }
@@ -137,22 +135,22 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "fsFormat") && isAccess(ACCESS_ADMIN)) { fsFormat();  }
 
   else if(equals(cmd, "fsDownload") && isAccess(ACCESS_CHANGE)) { ret=fsDownload(toString(cmdParam(param)),toString(cmdParam(param))); }
-  else if(equals(cmd, "rest")) { ret=rest(cmdParam(param)); } // 
-  else if(equals(cmd, "cmdRest")) { ret=cmdRest(cmdParam(param)); } // call http/rest and exute retur nbody as cmd
+  else if(equals(cmd, "rest") && isAccess(ACCESS_USE)) { ret=rest(cmdParam(param)); } // 
+  else if(equals(cmd, "cmdRest") && isAccess(ACCESS_USE)) { ret=cmdRest(cmdParam(param)); } // call http/rest and exute retur nbody as cmd
 
   else if(equals(cmd, "ledInit") && isAccess(ACCESS_ADMIN)) { ret=ledInit(toInt(cmdParam(param)),toBoolean(cmdParam(param))); } 
-  else if(equals(cmd, "led") && isAccess(ACCESS_CHANGE)) { ret=ledSwitch(cmdParam(param),cmdParam(param)); }
+  else if(equals(cmd, "led") && isAccess(ACCESS_USE)) { ret=ledSwitch(cmdParam(param),cmdParam(param)); }
   else if(equals(cmd, "swInit") && isAccess(ACCESS_ADMIN)) { ret=swInit(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); } //
-  else if(equals(cmd, "swCmd") && isAccess(ACCESS_ADMIN)) { ret=swCmd(toInt(cmdParam(param)),cmdParam(param)); }
+  else if(equals(cmd, "swCmd") && isAccess(ACCESS_USE)) { ret=swCmd(toInt(cmdParam(param)),cmdParam(param)); }
 
   // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
-  else if(equals(cmd, "timer") && isAccess(ACCESS_CHANGE)) { timerAdd(toBoolean(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),cmdParam(param));  }
-  else if(equals(cmd, "timerDel") && isAccess(ACCESS_CHANGE)) { timerDel(toInt(cmdParam(param)));  }
-  else if(equals(cmd, "timerGet") && isAccess(ACCESS_READ)) { 
+  else if(equals(cmd, "timer") && isAccess(ACCESS_USE)) { timerAdd(toBoolean(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),cmdParam(param));  }
+  else if(equals(cmd, "timerDel") && isAccess(ACCESS_USE)) { timerDel(toInt(cmdParam(param)));  }
+  else if(equals(cmd, "timerGet") && isAccess(ACCESS_USE)) { 
       MyEventTimer* timer=(MyEventTimer*)eventList.get(toInt(cmdParam(param))); 
       if(timer!=NULL) { ret=timer->info(); } 
     }
-  else if(equals(cmd, "timers") && isAccess(ACCESS_READ)) { timerLog();  }
+  else if(equals(cmd, "timers") && isAccess(ACCESS_USE)) { timerLog();  }
 
   else { ret=appCmd(cmd,param); }
 
@@ -406,7 +404,20 @@ char* attrInfo() {
 }
 void attrClear(char *prefix) { attrMap.clear(prefix); }
 
+/** get sys attribute */
+char* sysAttr(char *name) {
+  int d=0; char* s;
+  if(!is(name)) { return EMPTY; }
+  else if(equals(name,"timestamp")) { d=_timeMs;  }
+  else if(equals(name,"time")) { s=getTime();  }
+  else if(equals(name,"date")) { s=getDate(); }
+  else if(equals(name,"ip")) { s=(char*)appIP.c_str(); }
+  else if(equals(name, "freeHeap")) { d=ESP.getFreeHeap(); }// show free heap
+  else { return EMPTY; }
 
+  if(is(s)) { sprintf(paramBuffer,"%s",s); } else { sprintf(paramBuffer,"%d",d); }
+  return paramBuffer;   
+}
 
 //--------------------------------
 
@@ -479,6 +490,10 @@ char* cmdParam(char **pp) {
       (*pp)++; // skip first $
       p1 = strtok_r(NULL, " ",pp); 
       p1=attrGet(p1);
+    }else if(**pp=='~') { // sysAttribute
+      (*pp)++; // skip first $
+      p1 = strtok_r(NULL, " ",pp); 
+      p1=sysAttr(p1);
     }else if(pIsNumber(*pp) || pIsCalc(*pp)) {
         p1 = strtok_r(NULL, " ",pp);  
     }else { 

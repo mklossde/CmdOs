@@ -21,4 +21,4 @@ Change the LOG_LEVEL with cmd "logLevel LOG_LEVEL".
 - Web Serial ( http://ESPNAME.local/webserial
 - MQTT to device/esp/ESPNAME/log (mqttLog enabled)
 
-![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by michael@openon.org 

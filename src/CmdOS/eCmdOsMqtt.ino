@@ -162,6 +162,26 @@ void mqttReceive(char* topic, byte* payload, unsigned int length) {
 
 //-------------------------------------------------------
 
+#if mqttDiscovery
+
+char *espTopicStat;
+char *espTopicCmd;
+char *espTopicAvty;
+
+void mqttSendDiscover() {  
+    char *espTopicStat=copy(mqttPrefix,"/",eeBoot.espName,"/","stat_t");
+    char *espTopicCmd=copy(mqttPrefix,"/",eeBoot.espName,"/","cmd_t");
+    char *espTopicAvty=copy(mqttPrefix,"/",eeBoot.espName,"/","avty_t");
+    char *topic=copy("homeassistant/light/CmdOS/%s/config",eeBoot.espName);
+    char *msg=sprintf("buffer,"{\"name\": \"%s\",\"avty_t\": \"%s\", \"stat_t\": \"%s\",\"cmd_t\": \"%s\"}",eeBoot.espName,espTopicAvty,espTopicStat,espTopicCmd);
+    publishTopic(topic,msg);
+}
+#else
+  void mqttSendDiscover() {}
+#endif
+
+//-------------------------------------------------------
+
 boolean mqttRunning=false;
 
 void mqttInit() {
@@ -188,6 +208,7 @@ void mqttInit() {
 
   mqttCmdTopic = copy(to(mqttPrefix, "/", mqttClientName, "/cmd"));
   mqttResponseTopic = copy(to(mqttPrefix, "/", mqttClientName, "/result"));
+  mqttSendDiscover(); // send mqtt homaAssistant Discover
 
   mqttRunning=true;
   *mqttTime=0; // start conection now
@@ -197,6 +218,8 @@ void mqttInit() {
     sprintf(buffer,"MQTT init %s:%d user:%s pas:%s client:%s", mqttServer, mqttPort,mqttUser,mqttPas,mqttClientName); logPrintln(LOG_INFO,buffer);
   }
 }
+
+
 
 void mqttConnect() {    
     sprintf(buffer,"MQTT connecting... %s => %s", mqttClientName, mqttServer); logPrintln(LOG_DEBUG,buffer);    

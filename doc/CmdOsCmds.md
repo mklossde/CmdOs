@@ -203,7 +203,7 @@ call http/rest url and execute resposne body as cmd/prg
 
 
 
-![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](images/CmdOS_logo.gif) a OpenOn.org project - develop by michael@openon.org 
 
 
 
