@@ -106,11 +106,11 @@ void setMode(byte mode) {
 /* set default values */
 void eeDefault() {
   uint32_t chipid=espChipId(); // or use WiFi.macAddress() ?
-  if(!is(eeBoot.espName) || MODE_DEFAULT==EE_MODE_PRIVAT) { snprintf(eeBoot.espName,20, "OpenOs%08X",chipid);  }
+  if(!is(eeBoot.espName) || MODE_DEFAULT==EE_MODE_PRIVAT) { snprintf(eeBoot.espName,20, "CmdOs%08X",chipid);  }
   if((!is(eeBoot.espPas) || MODE_DEFAULT==EE_MODE_PRIVAT)) { sprintf(eeBoot.espPas,user_pas); }     // my private esp password   
   if(!is(eeBoot.wifi_ssid) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.wifi_ssid,wifi_ssid_default); } // my privat WIFI SSID of AccessPoint
   if(!is(eeBoot.wifi_pas) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.wifi_pas,wifi_pas_default); } // my privat WIFI SSID of AccessPoint
-  if(!is(eeBoot.mqtt) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.mqtt,mqtt_default); }           // my privat MQTT server
+  if(!is(eeBoot.mqtt) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.mqtt,mqtt_default); }           // my privat MQTT server 
 }
 
 /* on first start prg */
@@ -219,8 +219,7 @@ void bootRead() {
   }    
 
   sprintf(buffer,"EEPROM boot read mode:%d timestamp:%d espName:%s wifi_ssid:%s",eeMode,eeBoot.timestamp,eeBoot.espName,eeBoot.wifi_ssid); logPrintln(LOG_SYSTEM,buffer); 
-  logPrintln(LOG_SYSTEM,bootInfo());
-  mqttSetUrl(eeBoot.mqtt);  // set mqtt
+  logPrintln(LOG_SYSTEM,bootInfo());  
   if(!is(eeBoot.espPas)) { setAccess(ACCESS_ADMIN); } // without espApd admin=true
   ledBlink(1,100); // OK => direct blink 1x100ms
 }

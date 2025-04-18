@@ -10,12 +10,12 @@ const char *prgVersion = "V1.0.0";
 const char* user_admin = "admin"; // default user
 char user_pas[]="admin";   // default espPas
 
-const char *wifi_ssid_default = ""; //PRIVAT_WIFI_SSID; // PRIVAT_WIFI_SSID via #include <privatdata.h>
-const char *wifi_pas_default = ""; //PRIVAT_WIFI_PAS;   // PRIVAT_WIFI_PAS via #include <privatdata.h>
-const char *mqtt_default = ""; //PRIVAT_MQTTSERVER;     // PRIVAT_MQTTSERVER via #include <privatdata.h>
+const char *wifi_ssid_default = PRIVAT_WIFI_SSID; // PRIVAT_WIFI_SSID via #include <privatdata.h>
+const char *wifi_pas_default = PRIVAT_WIFI_PAS;   // PRIVAT_WIFI_PAS via #include <privatdata.h>
+const char *mqtt_default = PRIVAT_MQTTSERVER;     // PRIVAT_MQTTSERVER via #include <privatdata.h>
 
-byte MODE_DEFAULT=21; // normal=21=MODE_WIFI_CL_TRY /
-//byte MODE_DEFAULT=20; //  MODE_PRIVAT=20=load privat values, use wifi_ssid_default and wifi_pas_default and mqtt_default
+//byte MODE_DEFAULT=21; // normal=21=MODE_WIFI_CL_TRY /
+byte MODE_DEFAULT=20; //  MODE_PRIVAT=20=load privat values, use wifi_ssid_default and wifi_pas_default and mqtt_default
 //byte MODE_DEFAULT=0; // EE_MODE_FIRST=0=RESET on start
 
 boolean serialEnable=true; // enable/disbale serial in/out

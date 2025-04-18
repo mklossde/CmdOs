@@ -20,10 +20,11 @@ char* mqttPas;
 
 char* mqttCmdTopic; // topic for cmd messages (e.g. device/esp/EspBoot00DC9235/cmd)
 char* mqttResponseTopic; // topic for resposne of cmd messages (e.g. device/esp/EspBoot00DC9235/result) 
+char *espTopicCmd;
 
 WiFiClient *mqttWifiClient=NULL;
 #ifdef ESP32
-  WiFiClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
+  NetworkClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
 #elif defined(ESP8266)
   WiFiClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
 #endif   
@@ -32,6 +33,11 @@ PubSubClient *mqttClient=NULL;
 
 static char* mqttTopic=new char[64]; // buffer of topic
 static char* mqttMessage=new char[1024]; // buffer of message
+
+#if mqttDiscovery
+  char *espTopicStat;
+  char *espTopicAvty;
+#endif 
 
 //-------------------------------------------------------------------------------------
 // mqtt-url:  mqtt://USER:PAS@SERVER:PORT or mqtts://USER:PAS@SERVER:PORT /
@@ -117,12 +123,6 @@ void publishResponse(char *id,char *result) {
   }
 }
 
-void publishTopic(char* topic,char *message) {
-  if (mqttStatus != 2) { return ; }
-  boolean ok=mqttClient->publish(topic, message);
-  sprintf(buffer,"MQTT publish %s => %s ok:%d", mqttTopic,message,ok);  logPrintln(LOG_DEBUG,buffer);
-}
-
 /** subcribe topic to attr **/
 void mqttAttr(char *topic,boolean on) {
   if(mqttStatus != 2) { return ; }  
@@ -138,10 +138,34 @@ void mqttAttr(char *topic,boolean on) {
   } 
 }
 
+//-----------------------------------------------------
+
+/* publish a maessage */
+boolean mqttPublish(char* topic,char *message) {
+  if (mqttStatus != 2) { return false; }
+  boolean ok=mqttClient->publish(topic, message);  
+  if(!ok) { sprintf(buffer,"MQTT publish ERROR %s len:%d",topic,strlen(message));logPrintln(LOG_ERROR,buffer); }
+  else { 
+//Serial.print(topic); Serial.print("=");Serial.println(message); Serial.print(" len:");Serial.println(strlen(message));
+    sprintf(buffer,"MQTT publish %s",topic); logPrintln(LOG_DEBUG,buffer);
+  }
+  return ok;
+}
+
+/* subscibe a topic */
+boolean mqttSubscribe(char *topic) {
+    if (mqttStatus != 2) { return false; }
+    boolean ok=mqttClient->subscribe(topic); // subscribe cmd topic           
+    if(!ok) { sprintf(buffer,"MQTT subscribe ERROR %s",topic);logPrintln(LOG_ERROR,buffer); }
+    else { sprintf(buffer,"MQTT subscribe %s ok:%d", topic,ok); logPrintln(LOG_INFO,buffer); }
+    return ok;
+}
+
 //-------------------------------------------------------------------------------------
 // Receive messages
 
 void mqttReceive(char* topic, byte* payload, unsigned int length) {  
+
   if (strcmp(topic,mqttCmdTopic) == 0) {    
     char *msg=copy(NULL,(char*)payload,length);
     sprintf(buffer,"MQTT cmd '%s' %s %d", topic, msg,length); logPrintln(LOG_DEBUG,buffer);
@@ -156,28 +180,46 @@ void mqttReceive(char* topic, byte* payload, unsigned int length) {
     attrMap.replace(topic,(char*)payload,length);
     sprintf(buffer,"MQTT attrSet '%s'", topic); logPrintln(LOG_DEBUG,buffer);
 
+  #if mqttDiscovery
+  } else if (strcmp(topic,espTopicCmd) == 0) { 
+      char *msg=copy(NULL,(char*)payload,length);
+
+      sprintf(buffer,"MQTT HA '%s'=%s", topic,msg); logPrintln(LOG_DEBUG,buffer);
+      char *result=cmdLine(msg); 
+      if(result!=NULL) { mqttPublish(espTopicStat,result); }
+      free(msg);
+  #endif
+
   } else { sprintf(buffer,"MQTT unkown topic '%s'", topic); logPrintln(LOG_DEBUG,buffer);}
 
 }
+
+
 
 //-------------------------------------------------------
 
 #if mqttDiscovery
 
-char *espTopicStat;
-char *espTopicCmd;
-char *espTopicAvty;
+/* auto discover this as a light in HomeAssistant */
+void mqttDiscover() { 
+    char *type="text";
+    char *espStat=concat(espTopicStat,type,NULL);
+    logPrintln(LOG_DEBUG,espStat); 
+    char *espCmd=concat(espTopicCmd,type,NULL);
+    logPrintln(LOG_DEBUG,espTopicCmd); 
+    char *topic=concat("homeassistant/",type,"/CmdOS/",eeBoot.espName,"/config",NULL);
 
-void mqttSendDiscover() {  
-    char *espTopicStat=copy(mqttPrefix,"/",eeBoot.espName,"/","stat_t");
-    char *espTopicCmd=copy(mqttPrefix,"/",eeBoot.espName,"/","cmd_t");
-    char *espTopicAvty=copy(mqttPrefix,"/",eeBoot.espName,"/","avty_t");
-    char *topic=copy("homeassistant/light/CmdOS/%s/config",eeBoot.espName);
-    char *msg=sprintf("buffer,"{\"name\": \"%s\",\"avty_t\": \"%s\", \"stat_t\": \"%s\",\"cmd_t\": \"%s\"}",eeBoot.espName,espTopicAvty,espTopicStat,espTopicCmd);
-    publishTopic(topic,msg);
+//    static char* buffer=new char[500]; // buffer for char/logging
+    uint32_t chipid=espChipId();
+    sprintf(buffer,"{\"name\":\"%s_%s\",\"uniq_id\":\"CmdOs%08X_%s\",\"avty_t\":\"%s\",\"stat_t\":\"%s\",\"cmd_t\":\"%s\"",eeBoot.espName,type,chipid,type,espTopicAvty,espStat,espCmd);
+    sprintf(buffer+strlen(buffer),",\"dev\":{\"name\":\"%s\",\"ids\":\"CmdOs%08X\",\"configuration_url\":\"http://%s\",\"mf\":\"%s\",\"mdl\":\"%s\",\"sw\":\"%s\"}",eeBoot.espName,chipid,appIP.c_str(),APP_NAME_PREFIX,prgTitle,prgVersion);
+    sprintf(buffer+strlen(buffer),"}");
+    mqttPublish(topic,buffer);
+    free(topic); free(espStat);free(espCmd);
+
+    mqttPublish(espTopicStat, "");        // state        
 }
-#else
-  void mqttSendDiscover() {}
+
 #endif
 
 //-------------------------------------------------------
@@ -185,6 +227,8 @@ void mqttSendDiscover() {
 boolean mqttRunning=false;
 
 void mqttInit() {
+  if(MODE_DEFAULT==EE_MODE_PRIVAT) { mqttSetUrl((char*)mqtt_default); } // my privat MQTT server)
+  else if(!is(mqttServer) && is(eeBoot.mqtt)) { mqttSetUrl(eeBoot.mqtt);  }// set mqtt
   mqttClientName=eeBoot.espName;
 
   if(!is(mqttServer)) { logPrintln(LOG_SYSTEM,"MQTT error - mqttServer missing");  mqttConFail=3; return ; }  
@@ -196,19 +240,23 @@ void mqttInit() {
     mqttClient=new PubSubClient(*mqttWifiClient);
   }else {
     #ifdef ESP32
-      mqttClientSSL=new WiFiClientSecure();  
+      mqttClientSSL=new NetworkClientSecure();  
     #elif defined(ESP8266)
       mqttClientSSL=new WiFiClientSecure();  
     #endif    
     mqttClient=new PubSubClient(*mqttClientSSL);
   }  
 
+  espTopicAvty=concat(mqttPrefix,"/",eeBoot.espName,"/online",NULL); // availability/online
+  espTopicStat=concat(mqttPrefix,"/",eeBoot.espName,"/stat_",NULL); 
+  espTopicCmd=concat(mqttPrefix,"/",eeBoot.espName,"/cmd/",NULL);
+
+  mqttClient->setBufferSize(512); // extends mqtt message size
   mqttClient->setCallback(mqttReceive);     
   mqttClient->setServer(mqttServer, mqttPort);
 
-  mqttCmdTopic = copy(to(mqttPrefix, "/", mqttClientName, "/cmd"));
-  mqttResponseTopic = copy(to(mqttPrefix, "/", mqttClientName, "/result"));
-  mqttSendDiscover(); // send mqtt homaAssistant Discover
+  mqttCmdTopic =concat(espTopicCmd,"text",NULL);
+  mqttResponseTopic =concat(espTopicStat,"text",NULL);
 
   mqttRunning=true;
   *mqttTime=0; // start conection now
@@ -219,18 +267,22 @@ void mqttInit() {
   }
 }
 
-
-
 void mqttConnect() {    
     sprintf(buffer,"MQTT connecting... %s => %s", mqttClientName, mqttServer); logPrintln(LOG_DEBUG,buffer);    
-    if (mqttClient->connect(mqttClientName,mqttUser,mqttPas)) { // cennect 
+
+    if (mqttClient->connect(mqttClientName,mqttUser,mqttPas,espTopicAvty, 0, true, "offline")) { // cennect with user and last will availability="offline"
       sprintf(buffer,"MQTT connected %s => %s", mqttClientName, mqttServer); logPrintln(LOG_INFO,buffer); 
 
-
-      boolean ok=mqttClient->subscribe(mqttCmdTopic); // subscribe cmd topic   
-      sprintf(buffer,"MQTT subscribe %s ok:%d", mqttCmdTopic,ok); logPrintln(LOG_INFO,buffer);
       mqttStatus = 2;     
       publishValue("status","connect");        
+      
+      char *cmdTopic=concat(espTopicCmd,"+",NULL); mqttSubscribe(cmdTopic); free(cmdTopic); // subscibe all cmds
+
+      #if mqttDiscovery
+        mqttDiscover(); // send mqtt homaAssistant Discover
+      #endif
+
+      mqttClient->publish(espTopicAvty, "online");    // availability  online/offline
       mqttConFail=0;   // connected => reset fail
 
     } else {
@@ -282,6 +334,6 @@ void mqttLoop() {
   void mqttSetup() {}
   void mqttLoop() {}
   void mqttLog(char *message) {}
-  void publishTopic(char* topic,char *message) {} 
+  boolean mqttPublish(char* topic,char *message) {} 
   void mqttAttr(char *topic,boolean on) {}
 #endif

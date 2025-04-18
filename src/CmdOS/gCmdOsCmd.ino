@@ -112,7 +112,7 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "dns")) {  ret=netDns(cmdParam(param)); }         // wifi dns resolve (e.g. "dns web.de")
    
   else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(cmdParam(param));   } // enable/disbale mqttLog
-  else if(equals(cmd,"mqttSend") && isAccess(ACCESS_USE)) { publishTopic(cmdParam(param),cmdParam(param));  } // mqtt send topic MESSAGE
+  else if(equals(cmd, "mqttPublish") && isAccess(ACCESS_USE)) { mqttPublish(cmdParam(param),cmdParam(param));  } // mqtt send topic MESSAGE
   else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(cmdParam(param)));  }
   else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_USE)) { mqttAttr(cmdParam(param),toBoolean(cmdParam(param)));  }
   else if(equals(cmd, "mqtt")) { ret=mqttSet(cmdParam(param));  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833") 

@@ -223,6 +223,26 @@ MapList attrMap(true);
 
 //-----------------------------------------------------------------------------
 
+/* concat char to new char*, use NULL as END, (e.g char *res=concat("one","two",NULL); ), dont forget to free(res); */
+char* concat(char* first, ...) {
+    size_t total_len = 0;
+
+    va_list args;
+    va_start(args, first);
+    size_t l=0;
+    for (char* s = first; s != NULL && (l=strlen(s))>0; s = va_arg(args, char*)) {  total_len += l;  }
+    va_end(args);
+
+    char *result = (char*)malloc(sizeof(char) *(total_len + 1)); // +1 for null terminator
+    if (!result) return NULL;
+    result[0] = '\0'; // initialize empty string
+
+    va_start(args, first);
+    for (char* s = first; s != NULL; s = va_arg(args, char*)) { strcat(result, s); }
+    va_end(args);
+    return result;
+}
+
 /* copy org* to new (NEW CHAR[]
     e.g. char* n=copy(old); 
 */
