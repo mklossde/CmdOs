@@ -18,14 +18,20 @@ int mqttPort;
 char* mqttUser;
 char* mqttPas;
 
-char* mqttCmdTopic; // topic for cmd messages (e.g. device/esp/EspBoot00DC9235/cmd)
-char* mqttResponseTopic; // topic for resposne of cmd messages (e.g. device/esp/EspBoot00DC9235/result) 
-char *espTopicCmd;
+
+char *mqttTopicOnline;   // topic device online/offline
+char *mqttTopicStat;    // topic to send status of entitys
+char *mqttTopicReceive; // topic path of all commands (e.g. device/esp/EspBoot00DC9235/control)
+
+char* mqttTopicCmd=NULL; // topic for cmd messages (e.g. device/esp/EspBoot00DC9235/control/cmd)
+char* mqttTopicResponse=NULL; // topic for resposne of cmd messages (e.g. device/esp/EspBoot00DC9235/stat_cmd) 
 
 WiFiClient *mqttWifiClient=NULL;
 #ifdef ESP32
+  #include <NetworkClientSecure.h>
   NetworkClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
 #elif defined(ESP8266)
+  #include <WiFiClientSecure.h>
   WiFiClientSecure *mqttClientSSL=NULL; // WiFiClientSecure / NetworkClientSecure
 #endif   
 
@@ -34,10 +40,20 @@ PubSubClient *mqttClient=NULL;
 static char* mqttTopic=new char[64]; // buffer of topic
 static char* mqttMessage=new char[1024]; // buffer of message
 
-#if mqttDiscovery
-  char *espTopicStat;
-  char *espTopicAvty;
-#endif 
+/*
+class Param {
+  private:
+    char *_name;
+    byte _type;
+    char *_remote;
+    boolean _change=false;
+  public:
+    Param(char *name,byte type,char *remote) { _name=name; _type=type; _remote=remote; _change=change; }
+};
+
+MapList params;
+*/
+
 
 //-------------------------------------------------------------------------------------
 // mqtt-url:  mqtt://USER:PAS@SERVER:PORT or mqtts://USER:PAS@SERVER:PORT /
@@ -92,36 +108,42 @@ char* mqttSet(char* mqtt) {
 //-------------------------------------------------------------------------------------
 // publish messages
 
+/* publich log to mqtt */
 void mqttLog(char *message) {
   if(eeBoot.mqttLogEnable) {
       if (mqttStatus != 2) { return ; }
-      sprintf(mqttTopic,"%s/%s%/log",mqttPrefix,mqttClientName);
+      sprintf(mqttTopic,"%slog",mqttTopicStat);
       mqttClient->publish(mqttTopic, message);
   }
 }
 
+/*
 void publishValueMessage(char *name,char *message) {
-  if (mqttStatus != 2) { return ; }
+  if (mqttStatus != 2) { return ; }  
   sprintf(mqttTopic,"%s/%s%/value/%s",mqttPrefix,mqttClientName,name);
   boolean ok=mqttClient->publish(mqttTopic, message);
   sprintf(buffer,"MQTT publish %s => %s ok:%d", mqttTopic,message,ok);  logPrintln(LOG_DEBUG,buffer);
 }
+
 
 void publishValue(char *key,char *value) {
 //  sprintf(message,"{\"%s\":\"%s\"}",key,value);  
 //  publishStatus(message);
   publishValueMessage(key,to(value));
 }
+*/
 
+/*
 void publishResponse(char *id,char *result) {
   if (mqttStatus != 2) { return ; }
   if(result!=NULL && sizeof(result)>0) {
     if(id!=NULL) { sprintf(mqttMessage,"%s:%s", id,result); }
     else { sprintf(mqttMessage,result); }
-    boolean ok=mqttClient->publish(mqttResponseTopic, mqttMessage);
-    sprintf(buffer,"MQTT publish %s => %s ok:%d", mqttResponseTopic,mqttMessage,ok);  logPrintln(LOG_DEBUG,buffer);
+    boolean ok=mqttClient->publish(mqttTopicResponse, mqttMessage);
+    sprintf(buffer,"MQTT publish %s => %s ok:%d", mqttTopicResponse,mqttMessage,ok);  logPrintln(LOG_DEBUG,buffer);
   }
 }
+*/
 
 /** subcribe topic to attr **/
 void mqttAttr(char *topic,boolean on) {
@@ -161,32 +183,38 @@ boolean mqttSubscribe(char *topic) {
     return ok;
 }
 
+//-----------------------------------------------------
+
+void mqttPublishState(char *name,char *message) {
+  if(!is(message) ||  mqttStatus != 2) { return ; }
+  char *espStat=concat(mqttTopicStat,name,NULL);
+  mqttPublish(espStat,message);  
+  free(espStat);
+}
+
 //-------------------------------------------------------------------------------------
 // Receive messages
 
 void mqttReceive(char* topic, byte* payload, unsigned int length) {  
 
-  if (strcmp(topic,mqttCmdTopic) == 0) {    
+  if (mqttCmdEnable && strcmp(topic,mqttTopicCmd) == 0) {    
     char *msg=copy(NULL,(char*)payload,length);
     sprintf(buffer,"MQTT cmd '%s' %s %d", topic, msg,length); logPrintln(LOG_DEBUG,buffer);
     char *result=cmdLine(msg); 
     free(msg);
-    if(result!=NULL) {
-      char *id=NULL;    
-      publishResponse(id,result);
-    }
+    mqttPublishState("cmd",result);
 
   } else if(attrMap.find(topic)!=-1) { 
     attrMap.replace(topic,(char*)payload,length);
     sprintf(buffer,"MQTT attrSet '%s'", topic); logPrintln(LOG_DEBUG,buffer);
 
-  #if mqttDiscovery
-  } else if (strcmp(topic,espTopicCmd) == 0) { 
+  #if mqttDiscovery  
+  } else if (strcmp(topic,mqttTopicReceive) == 0) { 
       char *msg=copy(NULL,(char*)payload,length);
 
       sprintf(buffer,"MQTT HA '%s'=%s", topic,msg); logPrintln(LOG_DEBUG,buffer);
-      char *result=cmdLine(msg); 
-      if(result!=NULL) { mqttPublish(espTopicStat,result); }
+      //char *result=cmdLine(msg); 
+      //if(result!=NULL) { mqttPublish(mqttTopicStat,result); }
       free(msg);
   #endif
 
@@ -201,23 +229,24 @@ void mqttReceive(char* topic, byte* payload, unsigned int length) {
 #if mqttDiscovery
 
 /* auto discover this as a light in HomeAssistant */
-void mqttDiscover() { 
-    char *type="text";
-    char *espStat=concat(espTopicStat,type,NULL);
-    logPrintln(LOG_DEBUG,espStat); 
-    char *espCmd=concat(espTopicCmd,type,NULL);
-    logPrintln(LOG_DEBUG,espTopicCmd); 
+void mqttDiscover(char *type,char *name,boolean receiveOn) { 
+    char *espStat=concat(mqttTopicStat,name,NULL);
+    logPrintln(LOG_DEBUG,espStat);  
     char *topic=concat("homeassistant/",type,"/CmdOS/",eeBoot.espName,"/config",NULL);
 
-//    static char* buffer=new char[500]; // buffer for char/logging
     uint32_t chipid=espChipId();
-    sprintf(buffer,"{\"name\":\"%s_%s\",\"uniq_id\":\"CmdOs%08X_%s\",\"avty_t\":\"%s\",\"stat_t\":\"%s\",\"cmd_t\":\"%s\"",eeBoot.espName,type,chipid,type,espTopicAvty,espStat,espCmd);
+    sprintf(buffer,"{\"name\":\"%s_%s\",\"uniq_id\":\"CmdOs%08X_%s\",\"avty_t\":\"%s\",\"stat_t\":\"%s\"",eeBoot.espName,name,chipid,name,mqttTopicOnline,espStat);
+    if(receiveOn) { 
+      char *espCmd=concat(mqttTopicReceive,name,NULL); 
+      sprintf(buffer+strlen(buffer),",\"cmd_t\":\"%s\"",espCmd);
+      free(espCmd);
+    }
     sprintf(buffer+strlen(buffer),",\"dev\":{\"name\":\"%s\",\"ids\":\"CmdOs%08X\",\"configuration_url\":\"http://%s\",\"mf\":\"%s\",\"mdl\":\"%s\",\"sw\":\"%s\"}",eeBoot.espName,chipid,appIP.c_str(),APP_NAME_PREFIX,prgTitle,prgVersion);
     sprintf(buffer+strlen(buffer),"}");
     mqttPublish(topic,buffer);
-    free(topic); free(espStat);free(espCmd);
+    free(topic); free(espStat);
 
-    mqttPublish(espTopicStat, "");        // state        
+//    mqttPublish(mqttTopicStat, "");        // state        
 }
 
 #endif
@@ -247,16 +276,16 @@ void mqttInit() {
     mqttClient=new PubSubClient(*mqttClientSSL);
   }  
 
-  espTopicAvty=concat(mqttPrefix,"/",eeBoot.espName,"/online",NULL); // availability/online
-  espTopicStat=concat(mqttPrefix,"/",eeBoot.espName,"/stat_",NULL); 
-  espTopicCmd=concat(mqttPrefix,"/",eeBoot.espName,"/cmd/",NULL);
+  mqttTopicOnline=concat(mqttPrefix,"/",eeBoot.espName,"/online",NULL); // availability/online
+  mqttTopicStat=concat(mqttPrefix,"/",eeBoot.espName,"/stat_",NULL); 
+  mqttTopicReceive=concat(mqttPrefix,"/",eeBoot.espName,"/control/",NULL);
 
   mqttClient->setBufferSize(512); // extends mqtt message size
   mqttClient->setCallback(mqttReceive);     
   mqttClient->setServer(mqttServer, mqttPort);
 
-  mqttCmdTopic =concat(espTopicCmd,"text",NULL);
-  mqttResponseTopic =concat(espTopicStat,"text",NULL);
+  mqttTopicCmd =concat(mqttTopicReceive,"cmd",NULL);
+  mqttTopicResponse =concat(mqttTopicStat,"cmd",NULL);
 
   mqttRunning=true;
   *mqttTime=0; // start conection now
@@ -267,22 +296,25 @@ void mqttInit() {
   }
 }
 
+
 void mqttConnect() {    
     sprintf(buffer,"MQTT connecting... %s => %s", mqttClientName, mqttServer); logPrintln(LOG_DEBUG,buffer);    
 
-    if (mqttClient->connect(mqttClientName,mqttUser,mqttPas,espTopicAvty, 0, true, "offline")) { // cennect with user and last will availability="offline"
+    if (mqttClient->connect(mqttClientName,mqttUser,mqttPas,mqttTopicOnline, 0, true, "offline")) { // cennect with user and last will availability="offline"
       sprintf(buffer,"MQTT connected %s => %s", mqttClientName, mqttServer); logPrintln(LOG_INFO,buffer); 
 
       mqttStatus = 2;     
-      publishValue("status","connect");        
+//      publishValue("status","connect");        
       
-      char *cmdTopic=concat(espTopicCmd,"+",NULL); mqttSubscribe(cmdTopic); free(cmdTopic); // subscibe all cmds
+      char *cmdTopic=concat(mqttTopicReceive,"+",NULL); mqttSubscribe(cmdTopic); free(cmdTopic); // subscibe all cmds
 
       #if mqttDiscovery
-        mqttDiscover(); // send mqtt homaAssistant Discover
+        mqttDiscover("notify","state",false); // send mqtt homaAssistant state online Discover
+        mqttDiscover("text","cmd",mqttCmdEnable); // send mqtt homaAssistant Discover
+        mqttPublishState("state", "on");                   // discovery state
       #endif
 
-      mqttClient->publish(espTopicAvty, "online");    // availability  online/offline
+      mqttClient->publish(mqttTopicOnline, "online");    // availability  online/offline
       mqttConFail=0;   // connected => reset fail
 
     } else {
@@ -294,7 +326,8 @@ void mqttConnect() {
 
 void mqttDisconnect() { 
   if(mqttClient!=NULL && mqttClient->connected()) {
-    publishValue("status","disconnect");
+    mqttClient->publish(mqttTopicOnline, "offline");    // availability  online/offline
+//    publishValue("status","disconnect");
     mqttClient->disconnect();     
   }
   mqttClient=NULL;
@@ -330,7 +363,7 @@ void mqttLoop() {
   void mqttOpen(boolean on) {}
   void mqttInit() {}
   void mqttDisconnect() { }
-  char* mqttSet(char* mqtt) { return NULL; }
+  char* mqttSet(char* mqtt) { return "MQTT disabled"; }
   void mqttSetup() {}
   void mqttLoop() {}
   void mqttLog(char *message) {}

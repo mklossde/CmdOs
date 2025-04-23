@@ -172,7 +172,7 @@ void webFileManager(AsyncWebServerRequest *request) {
     if(request->hasParam("doSaveAndRun")) { cmdFile((char*)webParam(request,"name").c_str()); }
     webFileManagerEd(request, webParam(request,"name")); return;
   }
-  else if (request->hasParam("doUploadUrl")) { message=fsDownload(webParam(request,"url"), webParam(request,"name"));  }
+  else if (request->hasParam("doUploadUrl")) { message=fsDownload(webParam(request,"url"), webParam(request,"name"),-1);  }
 
   String html = "";
   html = pageHead(html, "File Manager");

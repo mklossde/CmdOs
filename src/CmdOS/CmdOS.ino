@@ -29,9 +29,12 @@ boolean bootSafe=true;    // enable/disbale boot safe
 #define enableFs true         // enable fs / SPIFFS
 
 #define netEnable true       // enable/disbale network ping/dns/HttpCLient 
+#define telnetEnable true       // enable/disbale telnet
 #define webSerialEnable true // enable/disbale web serial
 #define mqttEnable true      // enable/disbale mqtt
-#define mqttDiscovery true   // enable mqtt Homeassistant Discovery  
+#define mqttDiscovery false   // enable mqtt Homeassistant Discovery  
+boolean mqttCmdEnable=true;  // enable mqtt sedn/receive cmd
+boolean mqttLogEnable=false;  // enable mqtt send log
 
 #define otaEnable true        // enabled/disbale ota update 
 #define updateEnable true     // enabled/disbale update firmware via web 

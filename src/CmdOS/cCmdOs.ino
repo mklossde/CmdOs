@@ -15,7 +15,7 @@
 #include <time.h>         // time 
 #include <sys/time.h>     // time
 
-/* cmdOS from openON.org develop by mk@almi.de */
+/* cmdOS by michael@OpenON.org */
 const char *cmdOS="V.0.3.0";
 char *APP_NAME_PREFIX="CmdOs";
  
@@ -656,7 +656,7 @@ void logPrintln(int level,const char *text) {
   if(level>logLevel || !is(text)) { return ; }
   if(serialEnable) { Serial.println(text); } 
   if(webEnable) { webLogLn(toString(text)); }
-  if(mqttEnable) { mqttLog((char*)text); }
+  if(mqttLogEnable) { mqttLog((char*)text); }
 }
 
 /* log with lvel and string 
@@ -667,7 +667,7 @@ void logPrintln(int level,String text) {
   const char* log=text.c_str();
   if(serialEnable) { Serial.println(log); } 
   if(webEnable) { webLogLn(text); }
-  if(mqttEnable) { mqttLog((char*)log); }
+  if(mqttLogEnable) { mqttLog((char*)log); }
 }
 
 /* set actual logLevel - log this level and above
@@ -852,6 +852,7 @@ char* setLogLevel(int level) {
         if(count--<=0) { 
           if(type<=0) { sprintf(buffer,"%s",(char*)file.c_str()); return buffer;  }
           else if(type==1) { sprintf(buffer,"%d",foundfile.size()); return buffer;  }
+//          else if(type==2) { sprintf(buffer,"%d",foundfile.date()); return buffer;  }
           else { return "unkown type"; }
         }
       }
@@ -879,12 +880,17 @@ char* setLogLevel(int level) {
   #endif
 
     // e.g. https://www.w3.org/Icons/64x64/home.gif
-    char* fsDownload(String url,String name) {
+    char* fsDownload(String url,String name,int reload) {
       if(!is(url,0,250)) { return "missing url"; }
 
       HTTPClient http;
       if(name==NULL) { name=url.substring(url.lastIndexOf('/')); }
       if(!name.startsWith("/")) { name="/"+name; }
+
+      // check redownload 
+      if(fsSize(name)!=-1) {
+        if(reload==-1) { sprintf(buffer,"download foundOld '%s'",name); return buffer; }
+      }
 
       #ifdef ESP32
         http.begin(url); 
@@ -946,7 +952,7 @@ char* setLogLevel(int level) {
     }
 
   #else 
-    char* fsDownload(String url,String name) { return EMPTY; }
+    char* fsDownload(String url,String name,int reload) { return EMPTY; }
     char* rest(String url) { return EMPTY; }  
   #endif
 
@@ -990,7 +996,7 @@ void fsSetup() {
   int fsSize(String file) { return -1; }
   void fsCat(String file) {}
   char* fsDir() { return "fs not implemented";}  
-  char* fsDownload(String url,String name) { return "fs not implemented"; }
+  char* fsDownload(String url,String name,int reaload) { return "fs not implemented"; }
   char* rest(String url) { return "fs not implemented"; }  
   char* fsToSize(const size_t bytes) { return "fs not implemented"; }  
   void fsSetup() {}

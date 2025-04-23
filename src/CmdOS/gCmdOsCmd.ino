@@ -134,7 +134,7 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "fsRen") && isAccess(ACCESS_CHANGE)) { fsRename(toString(cmdParam(param)),toString(cmdParam(param)));  }  
   else if(equals(cmd, "fsFormat") && isAccess(ACCESS_ADMIN)) { fsFormat();  }
 
-  else if(equals(cmd, "fsDownload") && isAccess(ACCESS_CHANGE)) { ret=fsDownload(toString(cmdParam(param)),toString(cmdParam(param))); }
+  else if(equals(cmd, "fsDownload") && isAccess(ACCESS_CHANGE)) { ret=fsDownload(toString(cmdParam(param)),toString(cmdParam(param)),toInt(cmdParam(param))); }
   else if(equals(cmd, "rest") && isAccess(ACCESS_USE)) { ret=rest(cmdParam(param)); } // 
   else if(equals(cmd, "cmdRest") && isAccess(ACCESS_USE)) { ret=cmdRest(cmdParam(param)); } // call http/rest and exute retur nbody as cmd
 
