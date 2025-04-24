@@ -312,10 +312,13 @@ void fsSetup() {
   int8_t* fsReadBin(String file, size_t& fileSize) { return NULL; }
   int fsSize(String file) { return -1; }
   void fsCat(String file) {}
-  char* fsDir() { return "fs not implemented";}  
+  char* fsDir(String find) { return "fs not implemented";}  
+  int fsDirSize(String find) { return 0; }
   char* fsDownload(String url,String name,int reaload) { return "fs not implemented"; }
   char* rest(String url) { return "fs not implemented"; }  
   char* fsToSize(const size_t bytes) { return "fs not implemented"; }  
   void fsSetup() {}
   void fsFormat() {}
+  char* fsFile(String find,int count,int type) { return EMPTY; }
+  
 #endif
