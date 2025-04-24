@@ -1,11 +1,9 @@
 
 #include <Arduino.h>
 #ifdef ESP32
-//  #include <WiFi.h>  
   #include <AsyncTCP.h>
   #include <ESPmDNS.h>
 #elif defined(ESP8266)
-//  #include <ESP8266WiFi.h>
   #include <ESPAsyncTCP.h>
   #include <ESP8266mDNS.h>
 #endif
@@ -278,33 +276,6 @@ void webFileManager(AsyncWebServerRequest *request) {
 
 #if webSerialEnable
 
-/*
-//TODO AsyncWebSerial for esp8266
-  #include <AsyncWebSerial.h>
-  String path_console = "/webserial";
-  AsyncWebSerial webSerial;
-  void webSerialReceive(uint8_t *data, size_t len) {
-    String line = "";
-    for (int i = 0; i < len; i++) { line += char(data[i]); }
-    char ca[len + 1];
-    for (int i = 0; i < len; i++) { ca[i] = data[i]; }
-    ca[len] = '\0';
-    char* ret = cmdLine(ca);  // exec cmd
-  }
-
-  void webLogLn(String msg) {
-    if (webEnable && _webInit) { webSerial.println(msg); }
-  }
-
-  void webSerialSetup() {
-    webSerial.onMessage(webSerialReceive);  // exec cmd
-    webSerial.begin(&server);
-    if (is(eeBoot.espPas)) { webSerial.setAuthentication(user_admin, eeBoot.espPas); }  // webSerial auth
-    sprintf(buffer, "WebSerial started %s", path_console.c_str()); logPrintln(LOG_DEBUG,buffer);
-  }
-
-*/
-
   #include <WebSerialLite.h>
 
   void recvMsg(uint8_t *data, size_t len){
@@ -457,23 +428,6 @@ void webRes(AsyncWebServerRequest *request) {
 //  else if(onlyImage && (!name.endsWith(".gif") || !name.endsWith(".jpg"))) {  request->send(403, "text/html","not image"); }
   else { request->send(SPIFFS, name);  }
 }
-
-//-------------------------------------------------------------------------------------------------------------------
-// auth
-
-/*
-AsyncMiddlewareFunction webAuth([](AsyncWebServerRequest* request, ArMiddlewareNext next) {
-  if (!request->authenticate("user", "password")) {
-    return request->requestAuthentication();
-  }
-//  request->setAttribute("user", "user");
-//  request->setAttribute("role", "staff");
-
-  next();
-
-//  request->getResponse()->addHeader("X-Rate-Limit", "200");
-});
-*/
 
 //-------------------------------------------------------------------------------------------------------------------
 

@@ -40,21 +40,6 @@ PubSubClient *mqttClient=NULL;
 static char* mqttTopic=new char[64]; // buffer of topic
 static char* mqttMessage=new char[1024]; // buffer of message
 
-/*
-class Param {
-  private:
-    char *_name;
-    byte _type;
-    char *_remote;
-    boolean _change=false;
-  public:
-    Param(char *name,byte type,char *remote) { _name=name; _type=type; _remote=remote; _change=change; }
-};
-
-MapList params;
-*/
-
-
 //-------------------------------------------------------------------------------------
 // mqtt-url:  mqtt://USER:PAS@SERVER:PORT or mqtts://USER:PAS@SERVER:PORT /
 
@@ -117,35 +102,7 @@ void mqttLog(char *message) {
   }
 }
 
-/*
-void publishValueMessage(char *name,char *message) {
-  if (mqttStatus != 2) { return ; }  
-  sprintf(mqttTopic,"%s/%s%/value/%s",mqttPrefix,mqttClientName,name);
-  boolean ok=mqttClient->publish(mqttTopic, message);
-  sprintf(buffer,"MQTT publish %s => %s ok:%d", mqttTopic,message,ok);  logPrintln(LOG_DEBUG,buffer);
-}
-
-
-void publishValue(char *key,char *value) {
-//  sprintf(message,"{\"%s\":\"%s\"}",key,value);  
-//  publishStatus(message);
-  publishValueMessage(key,to(value));
-}
-*/
-
-/*
-void publishResponse(char *id,char *result) {
-  if (mqttStatus != 2) { return ; }
-  if(result!=NULL && sizeof(result)>0) {
-    if(id!=NULL) { sprintf(mqttMessage,"%s:%s", id,result); }
-    else { sprintf(mqttMessage,result); }
-    boolean ok=mqttClient->publish(mqttTopicResponse, mqttMessage);
-    sprintf(buffer,"MQTT publish %s => %s ok:%d", mqttTopicResponse,mqttMessage,ok);  logPrintln(LOG_DEBUG,buffer);
-  }
-}
-*/
-
-/** subcribe topic to attr **/
+/* subcribe topic to attr */
 void mqttAttr(char *topic,boolean on) {
   if(mqttStatus != 2) { return ; }  
   sprintf(buffer,"MQTT attr via topic %s",topic);
@@ -221,8 +178,6 @@ void mqttReceive(char* topic, byte* payload, unsigned int length) {
   } else { sprintf(buffer,"MQTT unkown topic '%s'", topic); logPrintln(LOG_DEBUG,buffer);}
 
 }
-
-
 
 //-------------------------------------------------------
 
@@ -303,8 +258,7 @@ void mqttConnect() {
     if (mqttClient->connect(mqttClientName,mqttUser,mqttPas,mqttTopicOnline, 0, true, "offline")) { // cennect with user and last will availability="offline"
       sprintf(buffer,"MQTT connected %s => %s", mqttClientName, mqttServer); logPrintln(LOG_INFO,buffer); 
 
-      mqttStatus = 2;     
-//      publishValue("status","connect");        
+      mqttStatus = 2;          
       
       char *cmdTopic=concat(mqttTopicReceive,"+",NULL); mqttSubscribe(cmdTopic); free(cmdTopic); // subscibe all cmds
 

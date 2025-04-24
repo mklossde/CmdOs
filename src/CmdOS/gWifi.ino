@@ -9,7 +9,6 @@
   #include <esp_sntp.h> // time
 #else
   #include <sys/time.h>  // struct timeval
-//  #include <coredecls.h>  // ! optional settimeofday_cb() callback to check on server
 #endif
 
 #include <time.h>     // time
@@ -56,7 +55,6 @@ unsigned long *wifiTime = new unsigned long(0);
 byte wifiStat=WIFI_CON_OFF; //  wifi status
 int bootWifiCount=0; // counter for wifi not reached
 int _lastClient=0; // numer of AP clients
-// boolean _wifiConnect=false; // ist wifi connect or client connect to ap
 
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
@@ -121,7 +119,7 @@ void eeInit() {
   eeSave();
 }
 
-/** e setup */
+/* ee setup */
 void eeSetup() {
 //TODO show restart reason
   if(MODE_DEFAULT==EE_MODE_FIRST) { bootClear(); } // is INIT => reset ALL
@@ -256,7 +254,6 @@ bool isAccess(int requireLevel) {
   else if(requireLevel>=eeBoot.accessLevel) { return true; } // access free
   else { 
     sprintf(buffer,"ACCESS DENIED %d<%d %d",requireLevel,eeBoot.accessLevel,_isLogin); 
-//    logPrintln(LOG_ERROR,buffer); 
     cmdError(buffer);     
     return false;     
     }
@@ -299,19 +296,7 @@ void mdnsSetup() {
 //-------------------------------------------------------------------------------------------------------------------
 // Wifi
 
-/*
-#ifdef ESP32
-  #include <WiFi.h>
-#elif defined(ESP8266)
-  #include <ESP8266WiFi.h>
-#elif defined(TARGET_RP2040)
-  #include <WiFi.h>
-#endif
-*/
-
 void webSetup();
-
-
     
 // start scan network
 char* wifiScan() { 
@@ -594,7 +579,7 @@ void wifiAPClientConnect() {
   } else if(numClients==0) {  wifiStat=WIFI_CON_CONNECTING; } 
 }
 
-/** this client connected to remote set_up */
+/* this client connected to remote set_up */
 void wifiAPConnectoToSetup() {
     if (WiFi.status() == WL_CONNECTED) {      
       String gw=WiFi.gatewayIP().toString();
@@ -738,16 +723,6 @@ void wifiValidate() {
 
   }
 
-
-/*
-  } else if (eeMode < EE_MODE_OK) {  
-  } else {
-    if (WiFi.status() != WL_CONNECTED) { // connection loose
-      wifiStart();
-    }
-  }
-*/
-
 }
 
 
@@ -798,13 +773,6 @@ void wifiStart(boolean on) {
 //-------------------------------------------------------------
 
 #if otaEnable
-/*
-#ifdef ESP32
-  #include <NetworkUdp.h>
-#elif defined(ESP8266)
-  #include <WIFIUdp.h>
-#endif
-*/
 
 #include <ArduinoOTA.h>
 

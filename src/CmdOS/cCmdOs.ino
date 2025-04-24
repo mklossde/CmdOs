@@ -65,10 +65,10 @@ long freeHeapMax;
 #define LOG_INFO 5
 #define LOG_DEBUG 10
 
-/** actual log level **/
+/* actual log level */
 byte logLevel=LOG_INFO;
 
-/** do have access */
+/* do have access */
 bool isAccess(int requireLevel);
 
 //-----------------------------------------------------------------------------
@@ -189,7 +189,6 @@ public:
   /* add object to list e.g. list.add(obj); */
   void add(void *obj) { if(_index>=_max) { grow(1); } _array[_index++]=obj; } 
   void addIndex(int index,void *obj) { 
-//    if(index>=_max) { grow(index-_max+1); } 
     if(index>=_max) { growTo(index+1,NULL); }     
     _array[index]=obj; if(index>=_index) { _index=index+1; } } 
   /* get obejct at index e.g. char* value=(char*)list.get(0); */
@@ -323,7 +322,7 @@ boolean startWith(char *str,char *find) {
   return true;
 }
 
-/** extract from src (NEW char[]) */
+/* extract from src (NEW char[]) */
 char* extract(char *start, char *end, char *src) {
     const char *start_ptr = strstr(src, start); if (!start_ptr) { return NULL; }
     start_ptr += strlen(start);  // Move past 'start'
@@ -337,18 +336,13 @@ char* extract(char *start, char *end, char *src) {
 /* validate is cstr equals to find  
     e.g. if(equals(cmd,"stat")) */
 boolean equals(char *str,char *find) {
-//sprintf(buffer,"equals '%s' '%s' ",to(str),to(find)); logPrintln(LOG_SYSTEM,buffer);
   if(!is(str) || !is(find)) { return false; }
-  int l1=strlen(str); int l2=strlen(find);
-//sprintf(buffer,"equals len '%d' '%d' ",l1,l2); logPrintln(LOG_SYSTEM,buffer);  
+  int l1=strlen(str); int l2=strlen(find); 
   if(l1!=l2) { return false; }
-//  return strcmp(str, find)==0;
-  for(int i=0;i<l2;i++) {  
-//sprintf(buffer,"equals is %d '%s' '%s' => %d",i,str,find,(*str==*find)); logPrintln(LOG_SYSTEM,buffer);      
+  for(int i=0;i<l2;i++) {        
     if(*str!=*find) { return false; } 
     str++; find++;
-  }
-//sprintf(buffer,"equals found '%s' '%s' ",str,find); logPrintln(LOG_SYSTEM,buffer);   
+  }  
   return true;
 }
 
@@ -357,7 +351,7 @@ boolean equals(char *str,char *find) {
 */
 int size(char *text) { if(text==NULL) { return -1; } else { return strlen(text); }}
 
-/** insert at pos into buffer */
+/* insert at pos into buffer */
 void insert(char* buffer,int pos,char* insertText) {
     size_t insertLen = strlen(insertText);
     size_t len = strlen(buffer);
@@ -389,7 +383,6 @@ char* to(boolean d) { sprintf(buffer,"%d",d); return buffer; }
 char* to(char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { return p; } else { return EMPTY; } }
 const char* to(const char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { return p; } else { return EMPTY; } }
 
-//char* to(const char *a) {  sprintf(buffer,"%s",to(a)); return buffer; }
 char* to(char *a,char *b) { sprintf(buffer,"%s%s",to(a),to(b)); return buffer; }
 char* to(const char *a, const char *b,const char *c) {  sprintf(buffer,"%s%s%s",to(a),to(b),to(c)); return buffer; }
 char* to(const char *a, const char *b,const char *c,const char *d) {  sprintf(buffer,"%s%s%s%s",to(a),to(b),to(c),to(d)); return buffer; }
@@ -401,7 +394,6 @@ String toString(char *text) {  if(!is(text)) { return EMPTYSTRING; } return Stri
 
 boolean toBoolean(int i) { return i>0; }
 /* convert char* to boolean */
-//boolean toBoolean(char *p) { return p!=NULL && (strcmp(p, "on")==0 || strcmp(p, "true")==0 || strcmp(p, "1")==0); }
 boolean toBoolean(char *p) { return p!=NULL && strlen(p)>0 && (strcmp(p, "on")==0 || strcmp(p, "true")==0 || atoi(p)>0); }
 /* convert char* to int */
 int toInt(char *p) { if(p!=NULL && strlen(p)>0) { return atoi(p); } else { return -1; } }
@@ -470,20 +462,11 @@ char* espInfo() {
     return buffer;
 }
 
-/* enlabel info 
-char* enableInfo() {
-   sprintf(buffer,"serialEnable:%d cmdEnable:%d ledEnable:%d swEnable:%d wifiEnable:%d webEnable:%d updateEnable:%d mdnsEnable:%d mqttEnable:%d",
-    serialEnable,cmdEnable,ledEnable,swEnable,wifiEnable,webEnable,updateEnable,mdnsEnable,mqttEnable);
-   return buffer; 
-}
-*/
-
 //-----------------------------------------------------------------------------
 // Log
 
 void webLogLn(String msg); // define in web
 void mqttLog(char *message); // define in mqtt
-//void mqttSet(char *mqtt); // set mqtt
 
 /* log with level 
     e.g. logPrintln(LOG_INFO,"info"); 

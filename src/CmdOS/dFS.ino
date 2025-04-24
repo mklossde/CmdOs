@@ -120,8 +120,7 @@
     char buffer[50];
     while (ff.available()) {
       int l = ff.readBytes(buffer, sizeof(buffer));
-      buffer[l] = '\0';
-  //TODO print with ln    
+      buffer[l] = '\0';  
       logPrintln(LOG_INFO,buffer);
     }
     ff.close();
@@ -173,7 +172,6 @@
         if(count--<=0) { 
           if(type<=0) { sprintf(buffer,"%s",(char*)file.c_str()); return buffer;  }
           else if(type==1) { sprintf(buffer,"%d",foundfile.size()); return buffer;  }
-//          else if(type==2) { sprintf(buffer,"%d",foundfile.date()); return buffer;  }
           else { return "unkown type"; }
         }
       }
@@ -192,7 +190,6 @@
   }
 
   #if netEnable
-
     #include <WiFiClient.h>
   #ifdef ESP32
     #include <HTTPClient.h>
@@ -225,7 +222,6 @@
       if(size>MAX_DONWLOAD_SIZE) { http.end(); return "download maxSize error"; }
 
       FILESYSTEM.remove(name);  // remove old file
-//      uint8_t buff[128] PROGMEM = {0};
       if (httpCode == 200) {
         sprintf(buffer,"fs downloading '%s' size %d to '%s'", url.c_str(), size,name.c_str());logPrintln(LOG_INFO,buffer);
         File ff = FILESYSTEM.open(name, "w"); 

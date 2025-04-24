@@ -28,11 +28,6 @@ char* appInfo() {
 
 /* convert param to line in buffer */
 char* paramToLine(char *param) {
-//  *buffer='\0';
-//  char* p=cmdParam(&param);
-//  if(is(p)) { append(buffer,p); p=cmdParam(&param); } 
-//  while(is(p)) { append(buffer," "); append(buffer,p); p=cmdParam(&param); }
-
   sprintf(buffer,"%s %s %s %s %s %s %s %s",
     cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param),cmdParam(&param)); 
 
@@ -93,11 +88,7 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { ret=setupEsp(cmdParam(param),cmdParam(param),cmdParam(param),cmdParam(param),cmdParam(param)); }// setup wifi-ssid wifi-pas espPas => save&restart  
 
   else if(equals(cmd, "logLevel")) { ret=setLogLevel(toInt(cmdParam(param))); }  // set mode (e.g. "mode NR")
-  else if(equals(cmd, "log")) { 
-//    sprintf(buffer,"%s %s %s %s %s %s %s %s",
-//    cmdParam(param),cmdParam(param),cmdParam(param),cmdParam(param),cmdParam(param),cmdParam(param),cmdParam(param),cmdParam(param)); 
-//    logPrintln(LOG_INFO,buffer); ret=buffer;}// log  
-    ret=paramToLine(*param); logPrintln(LOG_INFO,ret); } 
+  else if(equals(cmd, "log")) { ret=paramToLine(*param); logPrintln(LOG_INFO,ret); } 
 
   else if(equals(cmd, "save")) { bootSave();  }// write data to eeprom
   else if(equals(cmd, "load")) { bootRead(); }// load data from eprom
@@ -122,7 +113,6 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "stop")) { ret=prgStop(); } // stop/halt prg
   else if(equals(cmd, "continue")) { ret=prgContinue(); } // continue prg
   else if(equals(cmd, "next")) { ret=prgNext(cmdParam(param)); } // next prg step
-//  else if(equals(cmd, "error")) { cmdError(cmdParam(param));  }// end prg with error
   else if(equals(cmd, "error")) { cmdError(paramToLine(*param));  }// end prg with error
 
   else if(equals(cmd, "fsDir") && isAccess(ACCESS_USE)) { ret=fsDir(toString(cmdParam(param))); }
@@ -158,13 +148,6 @@ char* cmdExec(char *cmd, char **param) {
   return ret;
 }
 
-/* log unkown cmd and return EMPTY
-char* cmdUnkown(char* cmd,char *param) {
-  sprintf(buffer,"unkown '%s'",cmd); logPrintln(LOG_ERROR,buffer);
-  return EMPTY;
-}
-*/
-
 //------------------------------------------------------------------------------------------------
 
 unsigned long *_prgTime = new unsigned long(0);
@@ -183,34 +166,21 @@ void cmdError(char *error) {
 /* end of line (NULL = no line)*/
 char* lineEnd(char* ptr) {
   if(ptr==NULL || *ptr=='\0') { return NULL; }   
-//  ptr++;
   while(*ptr!=';' && *ptr!='\n' && *ptr!='\r' && *ptr!='\0') { 
-    ptr++; 
-//Serial.print(*ptr);    
+    ptr++;   
   }
   return ptr;
 } 
 
 
-/** goto key in prg */
+/* goto key in prg */
 boolean cmdGoto(char *findPtr,char *p0) { 
   if(findPtr==NULL) { cmdError("ERROR findPtr missing"); return false; } 
   else if(!is(p0)) { sprintf(buffer,"ERROR goto dest missing"); cmdError(buffer); return false; } 
   if(isInt(p0)) { _skipCmd=toInt(p0); return true;}
-/*
-  while(true) {
-    char *find = strstr(findPtr, p0);
-    if(find==NULL) { return "goto unkown"; }
-    else if((find-1)[0]==LINEEND) { _prgPtr=find; return true;  }
-    findPtr=find+1;   
-  }   
-  return false;
-*/
-//Serial.print(" findgoto:");Serial.println(p0);
 
   char *find=findPtr;
   while(find!=NULL) {    
-//Serial.print("line:");Serial.print(find);Serial.print(" startWith:"); Serial.print(p0); Serial.print(" ok:");Serial.println(strcmp(find,p0));
     if(startWith(find,p0)) { _prgPtr=find; return true;  }    
     find=lineEnd(find); 
     if(find!=NULL) { find++; }
@@ -250,14 +220,11 @@ boolean gotoSubEnd(char *prgPtr) {
 /* start sub on "ok" otherweise skip until }  */
 boolean startSub(char *param,boolean ok) {  
   char *cmdOnTrue=nextParam(&param);
-//sprintf(buffer,"startSub c:%s p:%s ok:%d",to(cmdOnTrue),to(param),ok); logPrintln(LOG_SYSTEM,buffer);
 
-  if(equals(cmdOnTrue,"{")) {
-//sprintf(buffer,"  startSub sub %d",ok); logPrintln(LOG_SYSTEM,buffer);        
+  if(equals(cmdOnTrue,"{")) {     
     if(ok)  { return true; } // on true => execute next line 
     else { return gotoSubEnd(_prgPtr); }
   }else {
-//sprintf(buffer,"  startSub cmd c:%s p:%s",to(cmdOnTrue),to(param)); logPrintln(LOG_SYSTEM,buffer);    
     if(ok) { char* ret=cmdExec(cmdOnTrue,&param); return true; } // on true => execute cmd 
     else { return false; }
   }
@@ -274,7 +241,6 @@ boolean repeatSub(char *param) {
 /* if RULE {} or else cmd */
 boolean cmdUntil(char **param) {
   boolean ok=toBoolean(calcParam(param));
-//Serial.print("cmdUntil "); Serial.println(ok); 
   if(!ok) { return repeatSub(*param); }
   else { return false; }
 }
@@ -282,25 +248,20 @@ boolean cmdUntil(char **param) {
 /* if RULE {} or else cmd */
 boolean cmdIf(char **param) {  
   _lastIf=toBoolean(calcParam(param));
-//Serial.print("if ");Serial.println(_lastIf);      
   return startSub(*param,_lastIf);
 }
 
 /* elseif RULE {} or else cmd */
 boolean cmdElseIf(char **param) {  
-//Serial.print("elseif ");Serial.println(_lastIf);    
   if(!_lastIf) { 
-//Serial.print("  elseif:");Serial.println(param);    
     _lastIf=toBoolean(calcParam(param));
-//Serial.print("  _lastIf:");Serial.println(_lastIf);        
 }
   return startSub(*param,_lastIf);
 }
 
 /* else {} or else cmd */
 boolean cmdElse(char **param) {  
-  boolean startElse=!_lastIf; if(!_lastIf) { _lastIf=true; }
-//Serial.print("else ");Serial.println(startElse);      
+  boolean startElse=!_lastIf; if(!_lastIf) { _lastIf=true; }  
   return startSub(*param,startElse);
 }
 
@@ -316,55 +277,14 @@ boolean pIsNumber(char *param) {
 }
 
 boolean pIsCalc(char *param) {
-  if(param==NULL) { 
-//Serial.print(" pIsCalc null");Serial.println("");    
+  if(param==NULL) {   
     return false; }
-//Serial.print(" pIsCalc:");Serial.println(*param);        
   if(*param=='<' || *param=='>' || *param=='=' || *param=='!') { return true; }
   else if(*param=='&' || *param=='|' ) { return true; }
   else if((*param=='+' || *param=='-') && (*(param+1)<'0' || *(param+1)>'9')) { return true; } // +- without number (e.g. -1) 
   else if(*param=='*' || *param=='/') { return true; }
   else { return false; }
 }
-
-
-
-//------------------------------------
-
-
-
-/* resolve/caclute param of if 
-boolean calcIf(char **param) {
-  char *a=cmdParam(param);
-  char *match=cmdParam(param);
-  char *b=cmdParam(param);  
-  int ai=toInt(a),bi=toInt(b);
-  boolean ok=false;
-
-  if(equals(match,"==")) { ok=(ai==bi); }
-  else if(equals(match,"!=")) { ok=(ai!=bi); }
-  else if(equals(match,">")) { ok=(ai>bi); }
-  else if(equals(match,">=")) { ok=(ai>=bi); }
-  else if(equals(match,"<")) { ok=(ai<bi); }
-  else if(equals(match,"<=")) { ok=(ai<=bi); }
-  else { sprintf(buffer,"ERROR match unkown"); cmdError(buffer); return false; }
-
-  sprintf(buffer,"calc a:%s match:%s b:%s => %d (ai:%d bi:%d)",a,match,b,ok,ai,bi); logPrintln(LOG_DEBUG,buffer);
-  return ok;
-}
-*/
-
-/*
-char* attrCalc(char *a,char *b,char *c) {
-  if(!is(b)) { return a; }
-  else if(equals(b,"+")) { int s=toInt(a)+toInt(c); sprintf(buffer,"%d",s); }
-  else if(equals(b,"-")) { int s=toInt(a)-toInt(c); sprintf(buffer,"%d",s); }
-  else if(equals(b,"*")) { int s=toInt(a)*toInt(c); sprintf(buffer,"%d",s); }
-  else if(equals(b,"/")) { int s=toInt(a)/toInt(c); sprintf(buffer,"%d",s); }
-  else {  sprintf(buffer,"ERROR unkown '%s' calc",b); cmdError(buffer); return EMPTY; }
-  return buffer;
-}
-*/
 
 //------------------------------------
 
@@ -382,17 +302,13 @@ char* cmdSet(char *key,char **param) {
 //--------------------------------
 
 int xCalc(int ai,char *calc,char **param) {   
-//Serial.print("xCalc ai:");Serial.println(ai); 
-//if(is(calc)) { Serial.print(" calc:");Serial.println(calc); }
   if(!is(calc)) { return ai;}
   else if(equals(calc,"++")) { return ai+1; }
   else if(equals(calc,"--")) { return ai-1; }
 
   int ret=0;
   char* bb=cmdParam(param);
-//Serial.print("  bb:");Serial.println(bb);  
-  int bi=toInt(bb);  
-//Serial.print("  bi:");Serial.println(bi);    
+  int bi=toInt(bb);   
   if(equals(calc,"==")) { ret=ai==bi; }
   else if(equals(calc,"!=")) { ret=ai!=bi; }
   else if(equals(calc,">")) { ret=ai>bi; }
@@ -411,9 +327,7 @@ int xCalc(int ai,char *calc,char **param) {
   else if(equals(calc,">>")) { ret=ai >> bi; }
   else if(equals(calc,"<<")) { ret=ai << bi; }
 
-//  else { cmdError("ERROR unkown calc"); ret=0; }
   else { sprintf(buffer,"ERROR unkown calc '%s'",calc); cmdError(buffer); ret=0; }
-//  sprintf(buffer,"calc a:%s calc:%s b:%s => %d",ai,calc,bi,ret); logPrintln(LOG_DEBUG,buffer);  
   return ret;
 }
 
@@ -482,7 +396,6 @@ char* nextParam(char **pp) {
 
 /* parse and execute a cmd line */
 char* cmdLine(char* line) {  
-//  return cmdParam(&line);
   char* cmd=nextParam(&line);
   return cmdExec(cmd,&line);
 }
@@ -492,30 +405,13 @@ char* cmdLine(char* line) {
 /* get next line as a copy of prg  */
 char *nextCmd() {
   if(_prgPtr==NULL) { return NULL; }
-/*  
-  else if(*_prgPtr=='\0') { return NULL; } // end found
-  char *line_end = strchr(_prgPtr, ';');
-  if(line_end!=NULL) { 
-    int len=line_end-_prgPtr;
-    if(len<=0) { _prgPtr+=len+1; return EMPTY; }
-    else if(len>=maxInData-1) { len=maxInData-1; }
-    memcpy( prgLine, _prgPtr, len); prgLine[len]='\0';
-    _prgPtr+=len+1; // set next pos
-    return prgLine;
-  }else {
-    int len=strlen(_prgPtr);
-    memcpy( prgLine, _prgPtr, len+1); //prgLine[len]='\0';
-    _prgPtr+=len; // set end pos
-    return prgLine;
-  }
-*/
+
   char *line_end=lineEnd(_prgPtr);
   if(line_end==NULL)  { return NULL; }
   int len=line_end-_prgPtr;
   if(len<=0) { _prgPtr+=len+1; return EMPTY; }
   memcpy( prgLine, _prgPtr, len); prgLine[len]='\0'; 
   _prgPtr+=len; // set next pos
-//Serial.print("line:");Serial.print(prgLine);Serial.println(" len:");  Serial.println(len);
   return prgLine;
 }
 
@@ -553,8 +449,6 @@ char* cmdPrg(char* prg) {
   if(_prg!=NULL) { delete[] _prg; _prg=NULL; _prgPtr=NULL; } // clear old prg
   if(!is(prg)) { return "prg missing"; }
   _prg=prg;
-//  replace(_prg,'\r',';'); // 
-//  replace(_prg,'\n',';'); // newLine => cmd End  
   _prgPtr=_prg;  // set ptr to prg start
   *_prgTime=0; // set prgTime to run
   return prgLoop();   
