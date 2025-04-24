@@ -13,11 +13,7 @@
 
 #include <time.h>     // time
 
-#ifdef ESP32
-  #include <ESPmDNS.h>
-#elif defined(ESP8266)
-  #include <ESP8266mDNS.h>
-#endif
+
 
 // Bootloader version
 char bootType[5] = "Os01"; // max 10 chars
@@ -272,6 +268,13 @@ boolean login(char *p) {
 //-------------------------------------------------------------------------------------------------------------------
 // mDNS
 
+#if mdnsEnable
+  #ifdef ESP32
+    #include <ESPmDNS.h>
+  #elif defined(ESP8266)
+    #include <ESP8266mDNS.h>
+  #endif
+
 void mdnsSetup() {
   if(!is(eeBoot.espName)) { return ; }
   else if(MDNS.begin(eeBoot.espName)) { 
@@ -280,16 +283,16 @@ void mdnsSetup() {
   }else { sprintf(buffer,"MDNS error"); logPrintln(LOG_ERROR,buffer); }
 }
 
-#ifdef ESP32
   void mdnsLoop() {  
+    #ifdef ESP32
+    #elif defined(ESP8266)
+      MDNS.update();
+    #endif
   }
 
-#elif defined(ESP8266)
-
-  void mdnsLoop() {  
-    MDNS.update();
-  }
-
+#else
+  void mdnsSetup() {}
+  void mdnsLoop() { }
 #endif
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -628,6 +631,19 @@ void wifiConnecting() {
          bootWifiCount=1; // try again
       }
     }  
+}
+
+//--------------------------------------------------------------------------------------
+
+byte setupDevice=0;
+
+char* setupDev(char *p0) {
+  if(is(p0)) { 
+    setupDevice=toInt(p0); 
+    if(setupDevice>0) { wifiAccessPoint(true); } // enable wifi setp_up
+    else { wifiInit(); }
+  } 
+  sprintf(buffer,"%d",setupDevice); return buffer;
 }
 
 //--------------------------------------------------------------------------------------

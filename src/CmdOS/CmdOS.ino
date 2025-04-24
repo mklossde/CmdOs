@@ -1,7 +1,8 @@
 
 // Application Start SRC
 
-#include <ESPAsyncWebServer.h>
+
+
 #include <privatdata.h>
 
 const char *prgTitle = "MyApp";
@@ -19,25 +20,25 @@ byte MODE_DEFAULT=20; //  MODE_PRIVAT=20=load privat values, use wifi_ssid_defau
 //byte MODE_DEFAULT=0; // EE_MODE_FIRST=0=RESET on start
 
 boolean serialEnable=true; // enable/disbale serial in/out
-
-boolean wifiEnable=true;  // enable/disbale wifi
-boolean webEnable=true;    // enable/disbale http server
-boolean mdnsEnable=true;   // enable/disable mDNS detection 
 boolean bootSafe=true;    // enable/disbale boot safe
+boolean wifiEnable=true;  // enable/disbale wifi
 
-#define ntpEnable true     // enable time server
+#define mdnsEnable false   // enable/disable mDNS detection 
+
+#define webEnable false    // enable/disbale http server
+#define ntpEnable false     // enable time server
 #define enableFs true         // enable fs / SPIFFS
 
-#define netEnable true       // enable/disbale network ping/dns/HttpCLient 
-#define telnetEnable true       // enable/disbale telnet
-#define webSerialEnable true // enable/disbale web serial
-#define mqttEnable true      // enable/disbale mqtt
+#define netEnable false       // enable/disbale network ping/dns/HttpCLient 
+#define telnetEnable false       // enable/disbale telnet
+#define webSerialEnable false // enable/disbale web serial
+#define mqttEnable false      // enable/disbale mqtt
 #define mqttDiscovery false   // enable mqtt Homeassistant Discovery  
 boolean mqttCmdEnable=true;  // enable mqtt sedn/receive cmd
 boolean mqttLogEnable=false;  // enable mqtt send log
 
-#define otaEnable true        // enabled/disbale ota update 
-#define updateEnable true     // enabled/disbale update firmware via web 
+#define otaEnable false        // enabled/disbale ota update 
+#define updateEnable false     // enabled/disbale update firmware via web 
 
 #define ledEnable false       // enable/disbale serial
 int ledGpio=15;            // io of led
@@ -58,8 +59,12 @@ byte swTickShort=2;     // swTickShort*swTimeBase => 5*100 => 500ms;
 byte swTickLong=5;      // swTickLong*swTimeBase => 10*100 => 1s;
 
 int _webPort = 80;
-AsyncWebServer server(_webPort);
  
+#if webEnable
+  #include <ESPAsyncWebServer.h>
+  AsyncWebServer webServer(_webPort);
+#endif
+
 //--------------------------------------------------------------
 
 

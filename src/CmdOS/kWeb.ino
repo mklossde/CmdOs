@@ -1,4 +1,8 @@
 
+#if webEnable
+
+
+
 #include <Arduino.h>
 #ifdef ESP32
   #include <AsyncTCP.h>
@@ -7,6 +11,7 @@
   #include <ESPAsyncTCP.h>
   #include <ESP8266mDNS.h>
 #endif
+
 
 
 AsyncAuthenticationMiddleware basicAuth;
@@ -293,7 +298,7 @@ void webFileManager(AsyncWebServerRequest *request) {
   }
 
   void webSerialSetup() {
-    WebSerial.begin(&server);
+    WebSerial.begin(&webServer);
     WebSerial.onMessage(recvMsg);
 //TODO    if (is(eeBoot.espPas)) { WebSerial.setAuthentication(user_admin, eeBoot.espPas); }  // webSerial auth
     sprintf(buffer, "WebSerial started /webserial"); logPrintln(LOG_DEBUG,buffer);
@@ -390,7 +395,7 @@ void webCmd(AsyncWebServerRequest *request) {
 
 //-------------------------------------------------------------------------------------------------------------------
 
-byte setupDevice=0;
+
 
 /* setup remote device by return "setup wifi_ssid wifi_pas NAME espPas" */
 void webSetupDevice(AsyncWebServerRequest *request) {
@@ -409,14 +414,7 @@ void webSetupDevice(AsyncWebServerRequest *request) {
   }
 }  
 
-char* setupDev(char *p0) {
-  if(is(p0)) { 
-    setupDevice=toInt(p0); 
-    if(setupDevice>0) { wifiAccessPoint(true); } // enable wifi setp_up
-    else { wifiInit(); }
-  } 
-  sprintf(buffer,"%d",setupDevice); return buffer;
-}
+
 
 //-------------------------------------------------------------------------------------------------------------------
 // auth
@@ -446,7 +444,7 @@ void webSetup() {
   basicAuth.setAuthType(AsyncAuthType::AUTH_BASIC);
   basicAuth.generateHash();
 
-  server.on("/config", HTTP_GET, [](AsyncWebServerRequest *request) { webWifi(request);})
+  webServer.on("/config", HTTP_GET, [](AsyncWebServerRequest *request) { webWifi(request);})
     .addMiddleware(&basicAuth);
 
   #if webSerialEnable
@@ -456,13 +454,13 @@ void webSetup() {
 
   // OTA
   if (updateEnable) {
-    server.on("/firmware", HTTP_GET, [](AsyncWebServerRequest *request) {
+    webServer.on("/firmware", HTTP_GET, [](AsyncWebServerRequest *request) {
             webUpdate(request);
           })
         .addMiddleware(&basicAuth);
 //TODO    if(eeBoot.accessTyper!=ACCESS_ALL) {  .addMiddleware(&basicAuth); }
       
-    server.on(
+    webServer.on(
             "/doUpdate", HTTP_POST,
             [](AsyncWebServerRequest *request) {},
             [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data,
@@ -481,12 +479,12 @@ void webSetup() {
   }
 
   //File Manager
-  server.on("/file", HTTP_GET, [](AsyncWebServerRequest *request) {
+  webServer.on("/file", HTTP_GET, [](AsyncWebServerRequest *request) {
           webFileManager(request);
         })
     .addMiddleware(&basicAuth);
   
-  server.on(
+  webServer.on(
           "/doUpload", HTTP_POST,
           [](AsyncWebServerRequest *request) {},[](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data,size_t len, bool final) {
             webFileManagerUpload(request, filename, index, data, len, final);
@@ -495,19 +493,19 @@ void webSetup() {
   
 
   // cmd
-  server.on("/cmd", HTTP_GET, [](AsyncWebServerRequest *request) { webCmd(request); })
+  webServer.on("/cmd", HTTP_GET, [](AsyncWebServerRequest *request) { webCmd(request); })
     .addMiddleware(&basicAuth);
 
   // resources
-  server.on("/res", HTTP_GET, [](AsyncWebServerRequest *request) { webRes(request); })
+  webServer.on("/res", HTTP_GET, [](AsyncWebServerRequest *request) { webRes(request); })
     .addMiddleware(&basicAuth);
 
   // web setupdevice
-  server.on("/setupDevice", HTTP_GET, [](AsyncWebServerRequest *request) { webSetupDevice(request); });
+  webServer.on("/setupDevice", HTTP_GET, [](AsyncWebServerRequest *request) { webSetupDevice(request); });
 
   //root
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) { webRoot(request); });
-  server.onNotFound([](AsyncWebServerRequest *request) {
+  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) { webRoot(request); });
+  webServer.onNotFound([](AsyncWebServerRequest *request) {
     request->send(404);
   });
 
@@ -515,7 +513,7 @@ void webSetup() {
   webApp();
 
 
-  server.begin();
+  webServer.begin();
 
 
   _webInit = true;
@@ -532,7 +530,10 @@ void webLoop() {
   #endif
 }
 
-void webStart(boolean on) {
-  webEnable = on;
-  webSetup();
-}
+
+#else 
+  void webLoop() {}  
+  void webSetup() {}
+#endif
+
+
