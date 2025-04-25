@@ -5,9 +5,7 @@ unsigned long *cmdTime = new unsigned long(0);
 int _skipCmd=0; // >0 => number of cmd to skip
 char LINEEND=';';
 
-#define maxInData 150 // max line length
-char inData [maxInData]; // read buffer
-char inIndex = 0; // read index
+
 char prgLine [maxInData]; // prgLine buffer
 
 char* _prg=NULL;
@@ -485,13 +483,17 @@ void cmdRead() {
     if (Serial.available() > 0) {
     char c = Serial.read();
     if (c != '\n' && c != '\r' && inIndex < maxInData-1) { inData[inIndex++] = c; } // read char 
-    else { // RETURN or maxlength 
+    else if(inIndex>0) { // RETURN or maxlength 
       inData[inIndex++] = '\0';
-      String ret=cmdLine(inData);
+      char* ret=cmdLine(inData);
       if(logLevel!=LOG_DEBUG) { logPrintln(LOG_SYSTEM,ret); }      
       inIndex = 0;
     }
   }
+}
+
+void cmdRead(char c) {
+
 }
 
 //--------------------------

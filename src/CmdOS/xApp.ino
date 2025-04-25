@@ -17,6 +17,7 @@ void cmdOSSetup() {
   if(isModeNoSystemError()) {
     wifiSetup();  
     otaSetup();
+    telnetSetup();
   }
 
   if(isModeOk()) {
@@ -36,6 +37,7 @@ void cmdOSLoop() {
   if(isModeNoSystemError()) {
     wifiLoop();
     otaLoop();
+    telnetLoop();
   }
 
   if(isModeOk()) {

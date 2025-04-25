@@ -1,0 +1,17 @@
+
+<head><title>Test WebSocket</title>
+</head>
+<body>
+	<h1> Test WebSocket</h1>
+	<script>
+		var ws = new WebSocket('ws://10.0.0.33:23');
+		ws.onopen = () => {
+		  console.log('ws opened on browser')
+		  ws.send('hello world')
+		}
+
+		ws.onmessage = (message) => {
+		  console.log(`message received`, message.data)
+		}
+	</script>
+</body>

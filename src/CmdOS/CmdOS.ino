@@ -30,9 +30,9 @@ boolean wifiEnable=true;  // enable/disbale wifi
 #define enableFs false         // enable fs / SPIFFS
 
 #define netEnable false       // enable/disbale network ping/HttpCLient 
-#define telnetEnable false       // enable/disbale telnet
+#define telnetEnable true       // enable/disbale telnet
 #define webSerialEnable false // enable/disbale web serial
-#define mqttEnable true      // enable/disbale mqtt
+#define mqttEnable false      // enable/disbale mqtt
 #define mqttDiscovery false   // enable mqtt Homeassistant Discovery  
 boolean mqttCmdEnable=true;  // enable mqtt sedn/receive cmd
 boolean mqttLogEnable=false;  // enable mqtt send log

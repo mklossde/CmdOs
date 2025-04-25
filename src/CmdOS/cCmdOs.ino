@@ -99,6 +99,11 @@ static String EMPTYSTRING="";
 //static String NOT_IMPLEMENTED="NOT IMPLEMENTED";
 
 //-------------------------------------------------------------------------------------------------------------------
+#define maxInData 150 // max line length
+char inData [maxInData]; // read buffer
+char inIndex = 0; // read index
+
+//-------------------------------------------------------------------------------------------------------------------
 //  List
 
 int minValueLen=11;
