@@ -32,7 +32,7 @@ boolean wifiEnable=true;  // enable/disbale wifi
 #define netEnable false       // enable/disbale network ping/HttpCLient 
 #define telnetEnable false       // enable/disbale telnet
 #define webSerialEnable false // enable/disbale web serial
-#define mqttEnable false      // enable/disbale mqtt
+#define mqttEnable true      // enable/disbale mqtt
 #define mqttDiscovery false   // enable mqtt Homeassistant Discovery  
 boolean mqttCmdEnable=true;  // enable mqtt sedn/receive cmd
 boolean mqttLogEnable=false;  // enable mqtt send log
@@ -98,3 +98,5 @@ void loop() {
     appLoop();
   }  
 }
+
+

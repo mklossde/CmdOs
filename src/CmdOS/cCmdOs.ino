@@ -162,7 +162,8 @@ public:
     if(index>=0) { void* old=_array[index]; _array[index]=obj; return old; } // overwrite 
     else {
       if(_index>=_max) { grow(1); } 
-      _key[_index]=copy(key); _array[_index]=obj; _index++;return NULL;
+      char *k=copy(key); _key[_index]=k; _array[_index]=obj; _index++;        
+      return NULL;
     }
   }  
   /* get key at index e.g. char *key=list.key(0); */
@@ -497,6 +498,7 @@ char* setLogLevel(int level) {
   if(level>=0) { logLevel=level; }
   sprintf(buffer,"%d",logLevel); return buffer;
 }
+
 
 
 

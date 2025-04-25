@@ -103,18 +103,39 @@ void mqttLog(char *message) {
 }
 
 /* subcribe topic to attr */
-void mqttAttr(char *topic,boolean on) {
-  if(mqttStatus != 2) { return ; }  
-  sprintf(buffer,"MQTT attr via topic %s",topic);
-  if(on) { 
-    if(attrHave(topic)) {  return ; } // alrady have
-    char* t=copy(topic);
-    attrMap.replace(t,(char*)"",0); boolean ok=mqttClient->subscribe(t); 
-    sprintf(buffer,"MQTT subsrcibe '%s' attr:%s", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
-  } else { 
-    boolean ok=mqttClient->unsubscribe(topic); attrMap.del(topic); 
-    sprintf(buffer,"MQTT unsubsrcibe '%s' attr:%s ok:%d", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
-  } 
+boolean mqttAttr(char* name,char *topic) {
+  if(mqttStatus != 2) { return false; }  
+  paramsAdd(name,topic,0);
+  attrMap.replace(name,(char*)"",0); 
+  boolean ok=mqttSubscribe(topic); 
+  sprintf(buffer,"MQTTattr subscribe '%s' topic:%s ok:%d", name,topic,ok); logPrintln(LOG_DEBUG,buffer);
+  return true;
+}
+
+boolean mqttDel(char* name,char *topic) {
+    if(topic==NULL) { return false; }
+    boolean ok=mqttClient->unsubscribe(topic); 
+    attrMap.del(name);
+    appParams.del(name);
+    sprintf(buffer,"MQTTattr unsubsrcibe '%s' topic:%s ok:%d", name,topic,ok); logPrintln(LOG_DEBUG,buffer);
+    return ok;
+}
+
+boolean mqttDel(char* name) {
+    char *topic=paramRemote(name);
+    if(topic==NULL) { return false; } else { return mqttDel(name,topic); }
+}
+
+int paramsClear(byte type) {
+  int count=0;
+  for(int i=appParams.size()-1;i>=0;i--) {  
+    AppParam *p=(AppParam*)appParams.get(i);
+    if(type==255 || type==p->_type) { 
+      mqttDel(p->name(),p->remote());
+      count++;
+    }
+  }
+  return count;
 }
 
 //-----------------------------------------------------
@@ -161,9 +182,11 @@ void mqttReceive(char* topic, byte* payload, unsigned int length) {
     free(msg);
     mqttPublishState("cmd",result);
 
+/*
   } else if(attrMap.find(topic)!=-1) { 
     attrMap.replace(topic,(char*)payload,length);
     sprintf(buffer,"MQTT attrSet '%s'", topic); logPrintln(LOG_DEBUG,buffer);
+*/
 
   #if mqttDiscovery  
   } else if (strcmp(topic,mqttTopicReceive) == 0) { 
@@ -175,7 +198,12 @@ void mqttReceive(char* topic, byte* payload, unsigned int length) {
       free(msg);
   #endif
 
-  } else { sprintf(buffer,"MQTT unkown topic '%s'", topic); logPrintln(LOG_DEBUG,buffer);}
+  } else { 
+    char *msg=copy(NULL,(char*)payload,length);
+    boolean ok=paramSet(topic,msg);
+    if(!ok) { sprintf(buffer,"MQTT unkown topic '%s'", topic); logPrintln(LOG_DEBUG,buffer); }    
+    free(msg);
+  }
 
 }
 
@@ -322,5 +350,6 @@ void mqttLoop() {
   void mqttLoop() {}
   void mqttLog(char *message) {}
   boolean mqttPublish(char* topic,char *message) {} 
-  void mqttAttr(char *topic,boolean on) {}
+  boolean mqttAttr(char *name,char *topic) {}  
+  boolean mqttDel(char*name) {}
 #endif

@@ -105,8 +105,12 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(cmdParam(param));   } // enable/disbale mqttLog
   else if(equals(cmd, "mqttPublish") && isAccess(ACCESS_USE)) { mqttPublish(cmdParam(param),cmdParam(param));  } // mqtt send topic MESSAGE
   else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(cmdParam(param)));  }
-  else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_USE)) { mqttAttr(cmdParam(param),toBoolean(cmdParam(param)));  }
+  else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_USE)) { mqttAttr(cmdParam(param),cmdParam(param));  }
+  else if(equals(cmd, "mqttDel") && isAccess(ACCESS_USE)) { mqttDel(cmdParam(param));  }
   else if(equals(cmd, "mqtt")) { ret=mqttSet(cmdParam(param));  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833") 
+
+  else if(equals(cmd, "params") && isAccess(ACCESS_USE)) { ret=paramsInfo();  }
+  else if(equals(cmd, "paramsClear") && isAccess(ACCESS_USE)) { paramsClear(toInt(cmdParam(param)));  }
 
   else if(equals(cmd, "run")) { ret=cmdFile(cmdParam(param)); } // run prg from file 
   else if(equals(cmd, "end")) { ret=cmdFile(NULL); }// stop prg
