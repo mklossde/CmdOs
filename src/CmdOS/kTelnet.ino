@@ -1,4 +1,6 @@
 
+//--------------------------------------------------------------------------------
+// telnet
 
 #if telnetEnable
 
@@ -100,6 +102,9 @@ Serial.println("REQUEST END");
     }
   }
 
+  // log to telnet client
+  void telnetLog(char *text) { if(telnetClient) { telnetClient.println(text); } }
+
   //------------------------------------
 
   void telnetSetup() {
@@ -114,6 +119,6 @@ Serial.println("REQUEST END");
 #else 
   void telnetSetup() {}
   void telnetLoop() {}
+  void telnetLog(char *text) {}
 #endif
-
 

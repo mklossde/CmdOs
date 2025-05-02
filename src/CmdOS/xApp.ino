@@ -1,5 +1,6 @@
 
-
+//--------------------------------------------------------------------------------------
+// Setup/Loop
 
 void cmdOSSetup() {
   if(serialEnable) { 
@@ -7,6 +8,7 @@ void cmdOSSetup() {
     delay(1); Serial.println("----------------------------------------------------------------------------------------------------------------------");
   }
   freeHeapMax=ESP.getFreeHeap(); // remeber max freeHeap
+  logPrintln(LOG_INFO,espInfo()); // ESP infos
   eeSetup();
   ledSetup();  
   swSetup(); 

@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------
 // Attr
 
@@ -42,6 +43,7 @@ char* sysAttr(char *name) {
   else if(equals(name,"date")) { s=getDate(); }
   else if(equals(name,"ip")) { s=(char*)appIP.c_str(); }
   else if(equals(name, "freeHeap")) { d=ESP.getFreeHeap(); }// show free heap
+  else if(equals(name, "freeHeapMax")) { d=freeHeapMax; }// show free heap  
   else { return EMPTY; }
 
   if(is(s)) { sprintf(paramBuffer,"%s",s); } else { sprintf(paramBuffer,"%d",d); }
@@ -138,4 +140,3 @@ boolean paramsAdd(AppParam *p) {
   return true;
 }
 */
-

@@ -1,6 +1,6 @@
-/*
- * Wifi
- */
+
+//--------------------------------------------------------------------------------------
+//  Wifi
  
 //#include <WiFi.h>
 #include <DNSServer.h>
@@ -12,8 +12,6 @@
 #endif
 
 #include <time.h>     // time
-
-
 
 // Bootloader version
 char bootType[5] = "Os01"; // max 10 chars
@@ -832,6 +830,4 @@ void otaLoop() {
   void otaSetup() {}
   void otaLoop() {}
 #endif
-
-
 

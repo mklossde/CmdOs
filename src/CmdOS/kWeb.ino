@@ -1,7 +1,8 @@
 
+//-----------------------------------------------------------------------------------
+// web
+
 #if webEnable
-
-
 
 #include <Arduino.h>
 #ifdef ESP32
@@ -12,14 +13,10 @@
   #include <ESP8266mDNS.h>
 #endif
 
-
-
 AsyncAuthenticationMiddleware basicAuth;
 
 boolean _webInit = false;
 
-//-----------------------------------------------------------------------------
-// web
 String webParam(AsyncWebServerRequest *request,String key) { 
   if (request->hasParam(key)) { return request->getParam(key)->value(); }
   else { return EMPTYSTRING; }
@@ -535,5 +532,4 @@ void webLoop() {
   void webLoop() {}  
   void webSetup() {}
 #endif
-
 

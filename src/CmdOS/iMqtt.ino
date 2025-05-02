@@ -1,7 +1,9 @@
 
+//--------------------------------------------------------------------
+// MQTT
+
 #if mqttEnable
 
-// MQTT
 #include <PubSubClient.h>
 
 unsigned long *mqttTime = new unsigned long(0); // mqtt timer
@@ -175,19 +177,24 @@ void mqttPublishState(char *name,char *message) {
 
 void mqttReceive(char* topic, byte* payload, unsigned int length) {  
 
-  if (mqttCmdEnable && strcmp(topic,mqttTopicCmd) == 0) {    
-    char *msg=copy(NULL,(char*)payload,length);
+  char *msg=copy(NULL,(char*)payload,length);
+
+  if (mqttCmdEnable && strcmp(topic,mqttTopicCmd) == 0) {   // call cmd     
     sprintf(buffer,"MQTT cmd '%s' %s %d", topic, msg,length); logPrintln(LOG_DEBUG,buffer);
     char *result=cmdLine(msg); 
     free(msg);
     mqttPublishState("cmd",result);
 
-/*
-  } else if(attrMap.find(topic)!=-1) { 
+  }else if(mqttOnMsg(topic,msg)) {
+     free(msg);
+     return ;
+     
+  } else if(attrMap.find(topic)!=-1) {  // set topic as attribute 
     attrMap.replace(topic,(char*)payload,length);
     sprintf(buffer,"MQTT attrSet '%s'", topic); logPrintln(LOG_DEBUG,buffer);
-*/
+    free(msg);
 
+/*
   #if mqttDiscovery  
   } else if (strcmp(topic,mqttTopicReceive) == 0) { 
       char *msg=copy(NULL,(char*)payload,length);
@@ -197,10 +204,10 @@ void mqttReceive(char* topic, byte* payload, unsigned int length) {
       //if(result!=NULL) { mqttPublish(mqttTopicStat,result); }
       free(msg);
   #endif
+*/
 
   } else { 
-    char *msg=copy(NULL,(char*)payload,length);
-    boolean ok=paramSet(topic,msg);
+    boolean ok=paramSet(topic,msg); // set as param
     if(!ok) { sprintf(buffer,"MQTT unkown topic '%s'", topic); logPrintln(LOG_DEBUG,buffer); }    
     free(msg);
   }
@@ -296,6 +303,7 @@ void mqttConnect() {
         mqttPublishState("state", "on");                   // discovery state
       #endif
 
+      mqttOnConnect(); // app spezific mqtt-commands after mqtt connect
       mqttClient->publish(mqttTopicOnline, "online");    // availability  online/offline
       mqttConFail=0;   // connected => reset fail
 
@@ -354,5 +362,6 @@ void mqttLoop() {
   boolean mqttDel(char*name) {}
 
   int paramsClear(byte type) { return 0; }
-  
+
 #endif
+

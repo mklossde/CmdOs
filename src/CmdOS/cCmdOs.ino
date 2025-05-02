@@ -328,12 +328,21 @@ boolean startWith(char *str,char *find) {
   return true;
 }
 
-/* extract from src (NEW char[]) */
+/* extract from src (NEW char[]) (e.g. is=extract(".",":","This.is:new") )*/
 char* extract(char *start, char *end, char *src) {
-    const char *start_ptr = strstr(src, start); if (!start_ptr) { return NULL; }
-    start_ptr += strlen(start);  // Move past 'start'
-    const char *end_ptr = strstr(start_ptr, end); if (!end_ptr) { return NULL; }
-    size_t len = end_ptr - start_ptr; 
+    const char *start_ptr=src;
+    if(is(start)) {  // find start if given
+      start_ptr = strstr(src, start); 
+      if (!start_ptr) { return NULL; } 
+      else { start_ptr += strlen(start); }  // Move past 'start'
+    }      
+    size_t len = 0;
+    if(is(end)) { 
+      const char *end_ptr = strstr(start_ptr, end); if (!end_ptr) { return NULL; }
+      len = end_ptr - start_ptr; 
+    }else  {
+      len=strlen(start_ptr);
+    }
     char *result=new char(len+1);
     strncpy(result, start_ptr, len);  result[len] = '\0';  
     return result;
@@ -462,8 +471,8 @@ uint32_t espChipId() {
 
 /* esp info */
 char* espInfo() {
-    sprintf(buffer,"ESP chip:%d free:%d core:%s freq:%d flashChipId:%d flashSize:%d flashSpeed:%d SketchSize:%d FreeSketchSpace:%d",    
-      espChipId(),ESP.getFreeHeap(), ESP.getSdkVersion(),ESP.getCpuFreqMHz()
+    sprintf(buffer,"ESP chip:%d free:%d/%d core:%s freq:%d flashChipId:%d flashSize:%d flashSpeed:%d SketchSize:%d FreeSketchSpace:%d",    
+      espChipId(),ESP.getFreeHeap(),freeHeapMax, ESP.getSdkVersion(),ESP.getCpuFreqMHz()
       ,ESP.getFlashChipMode(),ESP.getFlashChipSize(),ESP.getFlashChipSpeed(),ESP.getSketchSize(),ESP.getFreeSketchSpace());           
     return buffer;
 }
@@ -473,6 +482,7 @@ char* espInfo() {
 
 void webLogLn(String msg); // define in web
 void mqttLog(char *message); // define in mqtt
+void telnetLog(char *message); // define in telnet
 
 /* log with level 
     e.g. logPrintln(LOG_INFO,"info"); 
@@ -481,7 +491,8 @@ void mqttLog(char *message); // define in mqtt
 void logPrintln(int level,const char *text) { 
   if(level>logLevel || !is(text)) { return ; }
   if(serialEnable) { Serial.println(text); } 
-  if(webEnable) { webLogLn(toString(text)); }
+  if(telnetEnable) { telnetLog((char*)text); }
+  if(webSerialEnable) { webLogLn(toString(text)); }  
   if(mqttLogEnable) { mqttLog((char*)text); }
 }
 
@@ -492,8 +503,9 @@ void logPrintln(int level,String text) {
   if(level>logLevel || !is(text)) { return ; } 
   const char* log=text.c_str();
   if(serialEnable) { Serial.println(log); } 
-  if(webEnable) { webLogLn(text); }
-  if(mqttLogEnable) { mqttLog((char*)log); }
+  if(telnetEnable) { telnetLog((char*)log); }
+  if(webSerialEnable) { webLogLn(text); }
+  if(mqttLogEnable) { mqttLog((char*)log); }  
 }
 
 /* set actual logLevel - log this level and above
@@ -503,10 +515,3 @@ char* setLogLevel(int level) {
   if(level>=0) { logLevel=level; }
   sprintf(buffer,"%d",logLevel); return buffer;
 }
-
-
-
-
-
-
-

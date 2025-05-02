@@ -322,3 +322,4 @@ void fsSetup() {
   char* fsFile(String find,int count,int type) { return EMPTY; }
   
 #endif
+
