@@ -140,3 +140,38 @@ boolean paramsAdd(AppParam *p) {
   return true;
 }
 */
+
+//------------------------------------------------------------
+
+void paramSkipSpace(char **pp) {
+    if(pp==NULL || *pp==NULL || **pp=='\0') { return ; }    
+    while(**pp==' ' || **pp=='\t') { (*pp)++; } // skip spaces and tabs    
+}
+
+void paramTrim(char **pp) {
+  if(pp==NULL) { return ; }
+  paramSkipSpace(pp);
+  int i=strlen(*pp); while(i>=0 && **pp==' ') { i--; }
+  *pp[i]='\0';  
+}
+
+/* read next param */
+char* paramNext(char **pp,char *split) {
+    paramSkipSpace(pp);
+    if(pp==NULL || *pp==NULL || **pp=='\0') { return NULL; }
+
+    char* p1;    
+    if(**pp=='"') { // read string "param"
+      (*pp)++; // skip first "
+      p1 = strtok_r(NULL, "\"",pp);  
+      if(p1==NULL) { return EMPTY; }   
+      return p1;   
+
+    }else { 
+      p1 = strtok_r(NULL, split,pp);            
+    }
+
+    return p1;
+}
+
+

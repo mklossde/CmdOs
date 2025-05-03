@@ -151,6 +151,7 @@ char* cmdExec(char *cmd, char **param) {
   return ret;
 }
 
+
 //------------------------------------------------------------------------------------------------
 
 unsigned long *_prgTime = new unsigned long(0);
@@ -337,49 +338,33 @@ int xCalc(int ai,char *calc,char **param) {
 int calcParam(char **param) { return calcParam(cmdParam(param),param); }
 int calcParam(char *val,char **param) {
   int a=toInt(val);
-  cmdParamSkip(param); // skip spaces
+  paramSkipSpace(param); // skip spaces
   while(pIsCalc(*param))  {    
     char *calc=cmdParam(param);       
     a=xCalc(a,calc,param);
-    cmdParamSkip(param); // skip spaces
+    paramSkipSpace(param); // skip spaces
   }
   return a;
 }
 
-void cmdParamSkip(char **pp) {
-    if(pp==NULL || *pp==NULL || **pp=='\0') { return ; }    
-    while(**pp==' ' || **pp=='\t') { (*pp)++; } // skip spaces and tabs    
-}
-
 /* read next param */
 char* cmdParam(char **pp) {
-    cmdParamSkip(pp);
-    if(pp==NULL || *pp==NULL || **pp=='\0') { return EMPTY; }
+    char *p1=paramNext(pp," ");
+    if(p1==NULL) { return EMPTY; }
 
-    char* p1;    
-    if(**pp=='"') { // read string "param"
-      (*pp)++; // skip first "
-      p1 = strtok_r(NULL, "\"",pp);  
-      if(p1==NULL) { return EMPTY; }   
-      return p1;   
-
-    }else if(**pp=='$') { // attribute
-      (*pp)++; // skip first $
-      p1 = strtok_r(NULL, " ",pp); 
+    if(*p1=='$') { // attribute
+      p1++; // skip first $
       p1=attrGet(p1);
-    }else if(**pp=='~') { // sysAttribute
-      (*pp)++; // skip first $
-      p1 = strtok_r(NULL, " ",pp); 
+    }else if(*p1=='~') { // sysAttribute
+      p1++; // skip first $
       p1=sysAttr(p1);
-    }else if(pIsNumber(*pp) || pIsCalc(*pp)) {
-        p1 = strtok_r(NULL, " ",pp);  
-    }else { 
-      p1 = strtok_r(NULL, " ",pp);            
+    }else if(pIsNumber(p1) || pIsCalc(p1)) {
+    }else {   
       if(is(p1)) { p1=cmdExec(p1, pp); }
     }
 
     if(p1==NULL) { return EMPTY; } 
-    cmdParamSkip(pp); // skip spaces
+    paramSkipSpace(pp); // skip spaces
     if(pIsCalc(*pp)) { // next param calc 
       sprintf(buffer,"  calc after %s",p1); logPrintln(LOG_DEBUG,buffer);
       int ret=calcParam(p1,pp);

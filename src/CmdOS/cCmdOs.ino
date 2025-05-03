@@ -338,3 +338,4 @@ char* setLogLevel(int level) {
   if(level>=0) { logLevel=level; }
   sprintf(buffer,"%d",logLevel); return buffer;
 }
+

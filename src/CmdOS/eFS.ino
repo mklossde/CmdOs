@@ -70,7 +70,7 @@
     if(ff==NULL) { sprintf(buffer,"fsRead unkown '%s'",file.c_str());logPrintln(LOG_INFO,buffer);   return NULL; } 
     size_t fileSize= ff.size();
 
-    char *charArray = newChar[fileSize + 1];
+    char *charArray = newChar(fileSize + 1);
     ff.readBytes(charArray, fileSize);
     charArray[fileSize] = '\0';
     ff.close();
