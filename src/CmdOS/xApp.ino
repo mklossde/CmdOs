@@ -33,7 +33,6 @@ void cmdOSLoop() {
   ledLoop(); 
   swLoop(); 
   cmdLoop();
-
   timeLoop();
 
   if(isModeNoSystemError()) {

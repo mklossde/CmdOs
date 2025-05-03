@@ -28,7 +28,7 @@ boolean wifiEnable=true;  // enable/disbale wifi
 #define enableFs false         // enable fs / SPIFFS
 
 #define netEnable false       // enable/disbale network ping/HttpCLient 
-#define telnetEnable true       // enable/disbale telnet
+#define telnetEnable false       // enable/disbale telnet
 #define webSerialEnable false // enable/disbale web serial
 #define mqttEnable false      // enable/disbale mqtt
 #define mqttDiscovery false   // enable mqtt Homeassistant Discovery  
@@ -48,7 +48,7 @@ boolean ledOnTrue=true;           // gpio false=led-on
 #define SW_MODE_PULLDOWN 2 // Button with pullDown enabled
 #define SW_MODE_TOUCH 3   // TOUCH BUTTON
 
-#define swEnable true        // enable/disbale switch
+#define swEnable false        // enable/disbale switch
 int swGpio=32;                // io pin of sw 
 byte swOn=3;                // 0=pressend on false, 1= pressed on true, 2=use actual as off, 3-9=use actual minus dif, >9 pressed below swON
 byte swMode=SW_MODE_TOUCH;  // mode pullUp/pullDown/touch
@@ -70,7 +70,6 @@ int _webPort = 80;
 char* appCmd(char *cmd, char **param) {
   return cmd; // unkown cmd => use cmd as string
 }
-
 
 //--------------------------------------------------------------
 

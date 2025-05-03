@@ -27,6 +27,7 @@ char *mqttTopicReceive; // topic path of all commands (e.g. device/esp/EspBoot00
 
 char* mqttTopicCmd=NULL; // topic for cmd messages (e.g. device/esp/EspBoot00DC9235/control/cmd)
 char* mqttTopicResponse=NULL; // topic for resposne of cmd messages (e.g. device/esp/EspBoot00DC9235/stat_cmd) 
+char *mqttTopicLog=NULL;
 
 WiFiClient *mqttWifiClient=NULL;
 #ifdef ESP32
@@ -39,8 +40,6 @@ WiFiClient *mqttWifiClient=NULL;
 
 PubSubClient *mqttClient=NULL;
 
-static char* mqttTopic=new char[64]; // buffer of topic
-static char* mqttMessage=new char[1024]; // buffer of message
 
 //-------------------------------------------------------------------------------------
 // mqtt-url:  mqtt://USER:PAS@SERVER:PORT or mqtts://USER:PAS@SERVER:PORT /
@@ -92,6 +91,7 @@ char* mqttSet(char* mqtt) {
 }
 
 
+
 //-------------------------------------------------------------------------------------
 // publish messages
 
@@ -99,8 +99,7 @@ char* mqttSet(char* mqtt) {
 void mqttLog(char *message) {
   if(eeBoot.mqttLogEnable) {
       if (mqttStatus != 2) { return ; }
-      sprintf(mqttTopic,"%slog",mqttTopicStat);
-      mqttClient->publish(mqttTopic, message);
+      mqttClient->publish(mqttTopicLog, message);
   }
 }
 
@@ -175,24 +174,25 @@ void mqttPublishState(char *name,char *message) {
 //-------------------------------------------------------------------------------------
 // Receive messages
 
-void mqttReceive(char* topic, byte* payload, unsigned int length) {  
-
-  char *msg=copy(NULL,(char*)payload,length);
+void mqttReceive(char* topic, byte* payload, unsigned int length) {    
+//  char *msg=copy(NULL,(char*)payload,length);
+  if(length>=bufferMax) { logPrintln(LOG_ERROR,"mqtt msg to long"); return ; }
+  memcpy( buffer, payload, length); buffer[length]='\0'; char *msg=buffer;
 
   if (mqttCmdEnable && strcmp(topic,mqttTopicCmd) == 0) {   // call cmd     
-    sprintf(buffer,"MQTT cmd '%s' %s %d", topic, msg,length); logPrintln(LOG_DEBUG,buffer);
     char *result=cmdLine(msg); 
-    free(msg);
+//    free(msg);
+    sprintf(buffer,"MQTT cmd '%s' %d", topic, length); logPrintln(LOG_DEBUG,buffer);
     mqttPublishState("cmd",result);
 
   }else if(mqttOnMsg(topic,msg)) {
-     free(msg);
+//     free(msg);
      return ;
      
   } else if(attrMap.find(topic)!=-1) {  // set topic as attribute 
     attrMap.replace(topic,(char*)payload,length);
     sprintf(buffer,"MQTT attrSet '%s'", topic); logPrintln(LOG_DEBUG,buffer);
-    free(msg);
+//    free(msg);
 
 /*
   #if mqttDiscovery  
@@ -209,7 +209,7 @@ void mqttReceive(char* topic, byte* payload, unsigned int length) {
   } else { 
     boolean ok=paramSet(topic,msg); // set as param
     if(!ok) { sprintf(buffer,"MQTT unkown topic '%s'", topic); logPrintln(LOG_DEBUG,buffer); }    
-    free(msg);
+//    free(msg);
   }
 
 }
@@ -269,6 +269,7 @@ void mqttInit() {
   mqttTopicOnline=concat(mqttPrefix,"/",eeBoot.espName,"/online",NULL); // availability/online
   mqttTopicStat=concat(mqttPrefix,"/",eeBoot.espName,"/stat_",NULL); 
   mqttTopicReceive=concat(mqttPrefix,"/",eeBoot.espName,"/control/",NULL);
+  if(mqttLogEnable) { mqttTopicLog=concat(mqttPrefix,"/",eeBoot.espName,"/log",NULL); }
 
   mqttClient->setBufferSize(512); // extends mqtt message size
   mqttClient->setCallback(mqttReceive);     

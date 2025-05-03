@@ -70,7 +70,7 @@
     if(ff==NULL) { sprintf(buffer,"fsRead unkown '%s'",file.c_str());logPrintln(LOG_INFO,buffer);   return NULL; } 
     size_t fileSize= ff.size();
 
-    char *charArray = new char[fileSize + 1];
+    char *charArray = newChar[fileSize + 1];
     ff.readBytes(charArray, fileSize);
     charArray[fileSize] = '\0';
     ff.close();
@@ -84,7 +84,7 @@
         size_t dataSize = 0; // gif data size
         uint8_t *data = fsReadBin(name, dataSize); 
         delete[] data;
-  */
+*/
   uint8_t* fsReadBin(String file, size_t& fileSize) {
     if(!is(file)) { return NULL; }
     else if(!file.startsWith(rootDir)) { file=rootDir+file; }

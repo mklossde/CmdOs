@@ -16,11 +16,10 @@
 #include <sys/time.h>     // time
 
 /* cmdOS by michael@OpenON.org */
-const char *cmdOS="V.0.3.0";
+const char *cmdOS="V.0.4.0";
 char *APP_NAME_PREFIX="CmdOs";
  
 String appIP="";
-#define MAX_DONWLOAD_SIZE 10000
 
 /* on init auto find wifi set_up (password set_up) and connect */
 #define wifi_setup "set_up"
@@ -28,9 +27,7 @@ String appIP="";
 long freeHeapMax;
 
 //-----------------------------------------------------------------------------
-// new [] => delete[]
-// NEW => delete
-// malloc() or calloc() => free
+
 
 #define EE_MODE_FIRST 0 // First init => EEPROM Wrong
 #define EE_MODE_SETUP 1 // EEInit / wifi Setup mode
@@ -88,209 +85,22 @@ char* cmdFile(char* p0); // execute a cmd-file
 //-----------------------------------------------------------------------------
 // char utils
 
-#define valueMax 32
-#define bufferMax 500
-static char* buffer=new char[bufferMax]; // buffer for char/logging
-static char* EMPTY="";
+#define MAX_DONWLOAD_SIZE 50000
+
+#define bufferMax 256
 #define paramBufferMax 128
+#define maxInData 128 // max line length
+
+#define minValueLen 8
+
+static char* buffer=new char[bufferMax]; // buffer for char/logging
 static char* paramBuffer=new char[paramBufferMax]; // buffer for params
+static char inData [maxInData]; // read buffer
+static char inIndex = 0; // read index
 
+static char* EMPTY="";
 static String EMPTYSTRING="";
-//static String NOT_IMPLEMENTED="NOT IMPLEMENTED";
 
-//-------------------------------------------------------------------------------------------------------------------
-#define maxInData 150 // max line length
-char inData [maxInData]; // read buffer
-char inIndex = 0; // read index
-
-//-------------------------------------------------------------------------------------------------------------------
-//  List
-
-int minValueLen=11;
-
-/* list of object and map of key=value */
-class MapList {
-private:
-  int _index=0; int _max=0;
-  void** _array=NULL; // contains values 
-  char** _key=NULL; // contains keys
-  int* _vsize=NULL; // contains alloc-size of each value
-  boolean _isMap=false;
-
-  void grow(int grow) {
-    _max+=grow; 
-    if(_array==NULL) {          
-      _array = (void**) malloc(_max * sizeof(void*));
-      if(_isMap) { _key = (char**) malloc(_max * sizeof(char*)); }
-      _vsize = (int*) malloc(_max * sizeof(int));
-  }else {
-      _array = (void**)realloc(_array, _max * sizeof(void*)); 
-      if(_isMap) { _key = (char**)realloc(_key, _max * sizeof(char*)); }    
-      _vsize = (int*)realloc(_vsize, _max * sizeof(int));
-    }
-  }
-  void growTo(int max,void *obj) {
-    for(int i=_max;i<max;i++) { grow(1);_array[_max-1]=obj; }
-  }
-
-public:
-  // map
-  /* set by copy key and value and replace value on change */
-  void replace(char *key,char *obj,int len) {
-    if(!is(key)) { return ; } 
-    int index=find(key);
-    if(index==-1) {
-      if(_index>=_max) { grow(1); }       
-      int size=len; if(size<minValueLen) { size=minValueLen; }
-      char* to=new char[size+1]; if(to==NULL) { espRestart("replace() memory error"); }
-      if(len>0) { memcpy( to, obj, len); } 
-      to[len]='\0'; 
-      _key[_index]=copy(key); _array[_index]=to; _vsize[_index]=size;      
-      sprintf(buffer,"set %d '%s'='%s' len:%d size:%d",_index,key,to,len,size); logPrintln(LOG_DEBUG,buffer);
-      _index++;
-    }else {
-      void* old=(void*)_array[index];
-      int oldSize=_vsize[index];
-      if(oldSize<=len) {
-        _array[index] = (void*)realloc(_array[index], len+1); if( _array[index]==NULL) { espRestart("map-replace memory error"); }
-        _vsize[index]=len;        
-      }         
-      char* o=(char*)_array[index]; 
-      if(len>0) { memcpy(o, obj, len); } o[len]='\0';
-      sprintf(buffer,"replace '%s'='%s' len:%d oldSize:%d",key,o,len,oldSize); logPrintln(LOG_DEBUG,buffer);
-    }
-  }
-  
-  /* set key=value into list e.g. list.set("key",value); */
-  void* set(char *key,void *obj) {  
-    int index=find(key);   
-    if(index>=0) { void* old=_array[index]; _array[index]=obj; return old; } // overwrite 
-    else {
-      if(_index>=_max) { grow(1); } 
-      char *k=copy(key); _key[_index]=k; _array[_index]=obj; _index++;        
-      return NULL;
-    }
-  }  
-  /* get key at index e.g. char *key=list.key(0); */
-  char* key(int index) { if(index>=0 && index<_index) { return _key[index]; } else { return NULL; } }  
-  /* get value with key e.g. char *value=(char*)list.get(key); */
-  void* get(char *key) {  
-    if(!is(key)) { return NULL; }
-    for(int i=0;i<_index;i++) {  if(equals(_key[i],key)) { return _array[i]; } } 
-    return NULL;
-  } 
-  /* del key=value e.g. char* old=list.del(key); */
-  boolean del(char *key) { 
-    if(!is(key)) { return false; }
-    int index=find(key); if(index==-1) { return false; }
-    del(index);        
-    return true;
-  }  
-  /* find index of key e.g. int index=list.find(key); */
-  int find(char *key) { 
-    if(!is(key)) { return -1; }
-    for(int i=0;i<_index;i++) {  if(equals(_key[i],key)) { return i; } } return -1; }
-
-  // list ------------------------------------------------
-  /* add object to list e.g. list.add(obj); */
-  void add(void *obj) { if(_index>=_max) { grow(1); } _array[_index++]=obj; } 
-  void addIndex(int index,void *obj) { 
-    if(index>=_max) { growTo(index+1,NULL); }     
-    _array[index]=obj; if(index>=_index) { _index=index+1; } } 
-  /* get obejct at index e.g. char* value=(char*)list.get(0); */
-  void* get(int index) { if(index>=0 && index<_index) { return _array[index]; } else { return NULL; } }  
-  /* del object at index e.g. char* old=(char*)list.del(0); */
-  boolean del(int index) {   
-    if(index<0 || index>=_index) {return false; }      
-    void *obj=_array[index]; if(obj!=NULL) { delete obj; } 
-    if(_isMap) { void *oldKey=_key[index]; if(oldKey!=NULL) { delete oldKey; } }        
-    for(int i=index;i<_index-1;i++) { 
-      _array[i]=_array[i+1]; 
-      if(_isMap) { _key[i]=_key[i+1]; }
-      _vsize[i]=_vsize[i+1];
-    } 
-    _index--; 
-    return true;    
-  }
-  /* clear all (without prefix) / clear with prefix (e.g. clear my ) */
-  void clear(char *prefix) { for(int i=_index;i>=0;i--) { if(!is(prefix) || startWith(key(i),prefix)) { del(i); }} }
-
-  /* size of list e.g. int size=list.size(); */
-  int size() { return _index; }
-  MapList(int max) {  grow(max); }
-  MapList() {   }
-  MapList(boolean isMap) {  _isMap=isMap;  } // enable as map
-  ~MapList() { delete _array; if(_isMap) { delete _key; } }
-
-};
-
-
-//-----------------------------------------------------------------------------
-
-/* concat char to new char*, use NULL as END, (e.g char *res=concat("one","two",NULL); ), dont forget to free(res); */
-char* concat(char* first, ...) {
-    size_t total_len = 0;
-
-    va_list args;
-    va_start(args, first);
-    size_t l=0;
-    for (char* s = first; s != NULL && (l=strlen(s))>0; s = va_arg(args, char*)) {  total_len += l;  }
-    va_end(args);
-
-    char *result = (char*)malloc(sizeof(char) *(total_len + 1)); // +1 for null terminator
-    if (!result) return NULL;
-    result[0] = '\0'; // initialize empty string
-
-    va_start(args, first);
-    for (char* s = first; s != NULL; s = va_arg(args, char*)) { strcat(result, s); }
-    va_end(args);
-    return result;
-}
-
-/* copy org* to new (NEW CHAR[]
-    e.g. char* n=copy(old); 
-*/
-char* copy(char* org) { 
-  if(org==NULL) { return NULL; }
-  int len=strlen(org);
-  char* newStr=new char[len+1]; 
-  memcpy( newStr, org, len); newStr[len]='\0'; 
-  return newStr;
-}
-
-/* create a copy of org with new char[max] (NEW CHAR[])*/
-char* copy(char *to,char* org,int max) { 
-  if(to==NULL) { to=new char[max+1]; }
-  if(to==NULL) { espRestart("copy() memory error"); }
-  if(org!=NULL) { 
-    int len=strlen(org); if(len>max) { len=max; }
-    memcpy( to, org, len); to[len]='\0'; 
-  }else { to[0]='\0'; }
-  return to;
-}
-
-/* copy (MALLOC) */
-char* copy(char *to,String str,int max) { 
-  if(to==NULL) { to = (char*)malloc((max + 1)*sizeof(char));  }     
-  if(to==NULL) { espRestart("copy() memory error"); }
-  if(str!=NULL) {         
-//TODO take care on string len    
-    strcpy(to, str.c_str()); 
-  }
-  return to;
-}
-
-char* copy(String str) {  
-  if(str==NULL || str==EMPTYSTRING) { return NULL; } 
-  char* s = (char*)malloc(str.length() + 1); 
-  if(s==NULL) { espRestart("to() memory error"); }
-  strcpy(s, str.c_str());
-  return s;
-}
-char* copy(String str,char* def) {  
-  if(str==NULL || str==EMPTYSTRING) { return def; } 
-  int len  =str.length()+1; if(len==0) { return def; } char ca[len]; str.toCharArray(ca,len); return(ca);
-}
 
 //------------------------------------
 
@@ -328,25 +138,7 @@ boolean startWith(char *str,char *find) {
   return true;
 }
 
-/* extract from src (NEW char[]) (e.g. is=extract(".",":","This.is:new") )*/
-char* extract(char *start, char *end, char *src) {
-    const char *start_ptr=src;
-    if(is(start)) {  // find start if given
-      start_ptr = strstr(src, start); 
-      if (!start_ptr) { return NULL; } 
-      else { start_ptr += strlen(start); }  // Move past 'start'
-    }      
-    size_t len = 0;
-    if(is(end)) { 
-      const char *end_ptr = strstr(start_ptr, end); if (!end_ptr) { return NULL; }
-      len = end_ptr - start_ptr; 
-    }else  {
-      len=strlen(start_ptr);
-    }
-    char *result=new char(len+1);
-    strncpy(result, start_ptr, len);  result[len] = '\0';  
-    return result;
-}
+
 
 /* validate is cstr equals to find  
     e.g. if(equals(cmd,"stat")) */
