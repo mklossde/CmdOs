@@ -100,7 +100,7 @@ static char inIndex = 0; // read index
 
 static char* EMPTY="";
 static String EMPTYSTRING="";
-
+static char* UNKOWN="UNKOWN";
 
 //------------------------------------
 

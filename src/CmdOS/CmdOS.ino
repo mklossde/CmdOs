@@ -33,11 +33,12 @@ boolean wifiEnable=true;  // enable/disbale wifi
 #define mqttEnable false      // enable/disbale mqtt
 #define mqttDiscovery false   // enable mqtt Homeassistant Discovery  
 boolean mqttCmdEnable=true;  // enable mqtt sedn/receive cmd
+boolean mqttLogEnable=false;  // enable mqtt send log
 
 #define otaEnable false        // enabled/disbale ota update 
 #define updateEnable false     // enabled/disbale update firmware via web 
 
-boolean mqttLogEnable=false;  // enable mqtt send log
+
 
 #define ledEnable false       // enable/disbale serial
 int ledGpio=15;            // io of led
