@@ -120,6 +120,7 @@ char* cmdExec(char *cmd, char **param) {
 
   else if(equals(cmd, "fsDir") && isAccess(ACCESS_USE)) { ret=fsDir(toString(cmdParam(param))); }
   else if(equals(cmd, "fsDirSize") && isAccess(ACCESS_USE)) { int count=fsDirSize(toString(cmdParam(param))); sprintf(buffer,"%d",count); ret=buffer; }
+  else if(equals(cmd, "fsSize") && isAccess(ACCESS_USE)) { ret=fsSize(toString(cmdParam(param))); }
   else if(equals(cmd, "fsFile") && isAccess(ACCESS_USE)) { ret=fsFile(toString(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); }
   else if(equals(cmd, "fsCat") && isAccess(ACCESS_READ)) { fsCat(toString(cmdParam(param)));  }
   else if(equals(cmd, "fsWrite") && isAccess(ACCESS_CHANGE) ) { boolean ok=fsWrite(toString(cmdParam(param)),cmdParam(param)); }

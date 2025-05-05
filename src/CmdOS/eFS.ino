@@ -206,7 +206,7 @@
       if(!name.startsWith("/")) { name="/"+name; }
 
       // check redownload 
-      if(fsSize(name)!=-1) {
+      if(fsSize(name)>0) {
         if(reload==-1) { sprintf(buffer,"download foundOld '%s'",name); return buffer; }
       }
 
@@ -269,8 +269,8 @@
     }
 
   #else 
-    char* fsDownload(String url,String name,int reload) { return EMPTY; }
-    char* rest(String url) { return EMPTY; }  
+    char* fsDownload(String url,String name,int reload) { return UNKOWN; }
+    char* rest(String url) { return UNKOWN; }  
   #endif
 
 
@@ -312,11 +312,11 @@ void fsSetup() {
   int8_t* fsReadBin(String file, size_t& fileSize) { return NULL; }
   int fsSize(String file) { return -1; }
   void fsCat(String file) {}
-  char* fsDir(String find) { return "fs not implemented";}  
+  char* fsDir(String find) { return UNKOWN;}  
   int fsDirSize(String find) { return 0; }
-  char* fsDownload(String url,String name,int reaload) { return "fs not implemented"; }
-  char* rest(String url) { return "fs not implemented"; }  
-  char* fsToSize(const size_t bytes) { return "fs not implemented"; }  
+  char* fsDownload(String url,String name,int reaload) { return UNKOWN; }
+  char* rest(String url) { return UNKOWN; }  
+  char* fsToSize(const size_t bytes) { return UNKOWN; }  
   void fsSetup() {}
   void fsFormat() {}
   char* fsFile(String find,int count,int type) { return EMPTY; }
