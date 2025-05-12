@@ -10,6 +10,13 @@
   #include <WiFi.h>
 #endif
 
+/* TODO touchread 
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+	#include "driver/gpio.h"
+	#include <rom/ets_sys.h>
+#endif
+*/
+
 #include <EEPROM.h>       // EEprom read/write
 
 #include <time.h>         // time 

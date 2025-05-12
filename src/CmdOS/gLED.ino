@@ -2,6 +2,8 @@
 //-------------------------------------------------------------------------------------------------------------------
 // LED
 
+
+
 // BOOT SWITCH: BOOT=>BLINK 2x=>PRESS 2s=>WIFI_AP / 5s=>clear
 
 #if ledEnable
@@ -381,3 +383,12 @@ char* swInit(int pin, boolean on, byte mode, int timeBase, byte tickShort, byte 
 }
 
 #endif
+
+//----------------------------------------------------------------------
+
+/* set digital pin */
+void gpioSet(int pin,boolean value) { pinMode(pin, OUTPUT); digitalWrite(pin, value); }
+/* read digital pin */
+boolean gpio(int pin) { pinMode(pin, INPUT);  return digitalRead(pin); }
+
+

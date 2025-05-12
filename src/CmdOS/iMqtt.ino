@@ -369,6 +369,7 @@ void mqttLoop() {
   boolean mqttPublish(char* topic,char *message) {} 
   boolean mqttAttr(char *name,char *topic) {}  
   boolean mqttDel(char*name) {}
+  void mqttPublishState(char *name,char *message) {}
 
   int paramsClear(byte type) { return 0; }
 

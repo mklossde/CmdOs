@@ -137,6 +137,9 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "swInit") && isAccess(ACCESS_ADMIN)) { ret=swInit(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); } //
   else if(equals(cmd, "swCmd") && isAccess(ACCESS_USE)) { ret=swCmd(toInt(cmdParam(param)),cmdParam(param)); }
 
+  else if(equals(cmd, "gpioSet") && isAccess(ACCESS_ADMIN)) { gpioSet(toInt(cmdParam(param)),toBoolean(cmdParam(param))); }
+  else if(equals(cmd, "gpio") && isAccess(ACCESS_ADMIN)) { boolean v=gpio(toInt(cmdParam(param))); sprintf(buffer,"%d",v); ret=buffer; }
+
   // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
   else if(equals(cmd, "timer") && isAccess(ACCESS_USE)) { timerAdd(toBoolean(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),cmdParam(param));  }
   else if(equals(cmd, "timerDel") && isAccess(ACCESS_USE)) { timerDel(toInt(cmdParam(param)));  }
