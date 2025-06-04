@@ -343,7 +343,7 @@ void swSetup() {
   sw = new Switch(swGpio, swOn, swMode);
 }
 
-// swInit 32 3 3 100 4 5
+// swInit 32 90 3 100 2 5
 char *swInit(int pin, int on, byte mode, int timeBase, byte tickShort, byte tickLong) {
   if (pin != -1) {
     swGpio = pin;
